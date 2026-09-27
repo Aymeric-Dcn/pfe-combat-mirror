@@ -1,8 +1,9 @@
 """Draw the RT-COSMIK markers (markers.csv) on the recorded video.
 
-Run from the RT-COSMIK root: python3 overlay_video.py output/demo_03 [offset]
-Writes <run>/overlay_off<+N>.mp4. The offset is in video frames and can be fractional;
-a positive offset moves the skeleton earlier.
+Run from the RT-COSMIK root: python3 overlay_video.py output/demo_03 [offset | start:end]
+Offsets are in video frames (fractional allowed); a positive offset moves the skeleton
+earlier. "start:end" ramps the offset linearly over the video to correct a drift,
+e.g. "1:-1" when the skeleton lags at the beginning and leads at the end.
 """
 import sys
 
@@ -11,9 +12,13 @@ import numpy as np
 import pandas as pd
 
 run = sys.argv[1] if len(sys.argv) > 1 else "output/demo_03"
-offset = float(sys.argv[2]) if len(sys.argv) > 2 else 0.0
+spec = sys.argv[2] if len(sys.argv) > 2 else "0"
+start, _, end = spec.partition(":")
+off_start = float(start)
+off_end = float(end) if end else off_start
+label = f"{off_start:+.1f}" if off_end == off_start else f"{off_start:+.1f}_to_{off_end:+.1f}"
 calib = "config/cam_params/intrinsics/camera_0_intrinsics.yaml"
-out_path = f"{run}/overlay_off{offset:+.1f}.mp4"
+out_path = f"{run}/overlay_off{label}.mp4"
 
 BONES = [("RSHO", "LSHO"), ("RSHO", "RELB"), ("RELB", "RWRI"), ("LSHO", "LELB"), ("LELB", "LWRI"),
          ("RASI", "LASI"), ("RSHO", "RASI"), ("LSHO", "LASI"), ("RASI", "RKNE"), ("RKNE", "RANK"),
@@ -44,7 +49,7 @@ cap.release()
 # counter 0 = first video frame, last counter value = last video frame.
 counter = mk[frame_col].to_numpy(float)
 row_frame = counter / counter.max() * (n_video - 1)
-print(f"counter {counter.min():.0f} -> {counter.max():.0f} | video {n_video} frames | offset {offset:+.1f}")
+print(f"counter {counter.min():.0f} -> {counter.max():.0f} | video {n_video} frames | offset {label}")
 
 cap = cv2.VideoCapture(f"{run}/camera_0.mkv")
 fps = cap.get(cv2.CAP_PROP_FPS) or 30
@@ -56,6 +61,7 @@ while True:
     ok, img = cap.read()
     if not ok:
         break
+    offset = off_start + (off_end - off_start) * i / max(n_video - 1, 1)
     j = np.searchsorted(row_frame, i + offset, side="right") - 1
     if j >= 0:
         row = mk.iloc[j]

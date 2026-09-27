@@ -17,3 +17,4 @@ R wrist jumps > 30 cm             6 (0.5 % of rows)
 L wrist jumps > 30 cm             0
 
 overlay: counter 596 -> 3011, video 756 frames, skeleton drawn on 606 frames
+best overlay offset (chosen by eye): -3 video frames (~0.4 s); lag remains when turning around

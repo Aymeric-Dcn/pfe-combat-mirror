@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One overlay video per offset, to pick the best sync by eye.
+# One overlay video per offset (or start:end ramp), to pick the best sync by eye.
 # Run from the RT-COSMIK root: bash overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
 set -euo pipefail
 run="${1:-output/demo_03}"
