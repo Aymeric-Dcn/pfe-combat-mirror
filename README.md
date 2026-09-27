@@ -26,12 +26,12 @@ scripts/analysis/               take quality check + skeleton overlay video
 scripts/tools/                  RT-COSMIK main setup + export from the container
 docker/                         image built on top of cosmik-dev-container's
 results/                        takes (csv, plots; videos stay out of git)
-docs/                           report, session cheat sheet, Docker notes (French)
+docs/                           setup guide (EN/FR), progress report (FR)
 ```
 
 ## Quick start
 
-Environment: the Docker image from [cosmik-dev-container](https://github.com/MaximeSabbah/cosmik-dev-container) (CUDA 12.1, Ubuntu 22.04, ROS 2 Humble, torch 2.4.1) plus Gepetto's RT-COSMIK `main`. Windows/WSL2 specifics are in [`docs/aide_memoire_session.md`](docs/aide_memoire_session.md).
+Environment: the Docker image from [cosmik-dev-container](https://github.com/MaximeSabbah/cosmik-dev-container) (CUDA 12.1, Ubuntu 22.04, ROS 2 Humble, torch 2.4.1) plus Gepetto's RT-COSMIK `main`. Full setup, Windows/WSL 2 notes and troubleshooting: [`docs/SETUP.md`](docs/SETUP.md).
 
 ```bash
 # inside the container

@@ -142,7 +142,7 @@ Caméra & Webcam UGREEN (USB \code{0c45:2283}), une seule pour l'instant \\
 \caption{Environnement matériel et logiciel. Le relevé exact des versions est produit par \code{scripts/tools/collect\_from\_container.sh} (\code{docs/container\_versions.txt}).}
 \end{table}
 
-Le conteneur n'a pas de dossier partagé avec Windows : tous les fichiers de travail vivent à l'intérieur (\code{/root/workspace/ros\_ws/}) et sont récupérés avec \code{docker cp}. Des instantanés ont été pris avec \code{docker commit} (\code{cosmik-backup:2026-09-26}, puis après la démonstration). Le fonctionnement de l'image et les moyens de la transporter sont décrits dans \code{docs/docker\_export.md}.
+Le conteneur n'a pas de dossier partagé avec Windows : tous les fichiers de travail vivent à l'intérieur (\code{/root/workspace/ros\_ws/}) et sont récupérés avec \code{docker cp}. Des instantanés ont été pris avec \code{docker commit} (\code{cosmik-backup:2026-09-26}, puis après la démonstration). La construction de l'image et l'installation complète sont décrites dans \code{docs/SETUP.fr.md}.
 
 % =============================================================================
 \section{Architecture de RT-COSMIK}

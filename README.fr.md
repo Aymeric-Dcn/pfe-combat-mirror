@@ -26,12 +26,12 @@ scripts/analysis/               analyse qualité d'une prise + vidéo avec squel
 scripts/tools/                  installation de RT-COSMIK main + export du conteneur
 docker/                         image dérivée de celle de cosmik-dev-container
 results/                        résultats des prises (CSV, graphes ; vidéos hors git)
-docs/                           rapport LaTeX, aide-mémoire de session, notes Docker
+docs/                           guide d'installation (EN/FR), rapport d'avancement (FR)
 ```
 
 ## Démarrage rapide
 
-Environnement : conteneur Docker de [cosmik-dev-container](https://github.com/MaximeSabbah/cosmik-dev-container) (CUDA 12.1, Ubuntu 22.04, ROS 2 Humble, torch 2.4.1), RT-COSMIK `main` du dépôt Gepetto. Voir [`docs/aide_memoire_session.md`](docs/aide_memoire_session.md) pour la procédure complète sous Windows/WSL2.
+Environnement : conteneur Docker de [cosmik-dev-container](https://github.com/MaximeSabbah/cosmik-dev-container) (CUDA 12.1, Ubuntu 22.04, ROS 2 Humble, torch 2.4.1), RT-COSMIK `main` du dépôt Gepetto. Installation complète, particularités Windows/WSL 2 et dépannage : [`docs/SETUP.fr.md`](docs/SETUP.fr.md).
 
 ```bash
 # dans le conteneur
