@@ -1,0 +1,11 @@
+diff --git a/src/rtcosmik/nlf/nlf.py b/src/rtcosmik/nlf/nlf.py
+index 2a52487..a018b61 100644
+--- a/src/rtcosmik/nlf/nlf.py
++++ b/src/rtcosmik/nlf/nlf.py
+@@ -1,5 +1,6 @@
+ import numpy as np
+ import torch
++import torchvision  # registers torchvision::nms, needed by the NLF TorchScript model
+ from ultralytics import YOLO
+ import logging
+ import time

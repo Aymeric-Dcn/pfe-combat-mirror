@@ -1,0 +1,6 @@
+total 7784
+drwxr-xr-x 2 root root    4096 Sep 27 12:36 .
+drwxr-xr-x 5 root root    4096 Sep 27 13:00 ..
+-rw-r--r-- 1 root root 7602176 Sep 27 12:41 camera_0.mkv
+-rw-r--r-- 1 root root   90145 Sep 27 12:41 joint_angles.csv
+-rw-r--r-- 1 root root  265326 Sep 27 12:41 markers.csv

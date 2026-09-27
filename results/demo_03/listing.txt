@@ -1,0 +1,15 @@
+total 160932
+drwxr-xr-x 2 root root     4096 Sep 27 14:02 .
+drwxr-xr-x 5 root root     4096 Sep 27 13:00 ..
+-rw-r--r-- 1 root root   251444 Sep 27 13:03 analyse.png
+-rw-r--r-- 1 root root   250610 Sep 27 14:02 analysis.png
+-rw-r--r-- 1 root root 29884416 Sep 27 13:02 camera_0.mkv
+-rw-r--r-- 1 root root 18662464 Sep 27 13:03 demo_overlay.mp4
+-rw-r--r-- 1 root root  1040242 Sep 27 13:02 joint_angles.csv
+-rw-r--r-- 1 root root  3115223 Sep 27 13:02 markers.csv
+-rw-r--r-- 1 root root 18679439 Sep 27 14:02 overlay_off+00.mp4
+-rw-r--r-- 1 root root 18714893 Sep 27 14:02 overlay_off+03.mp4
+-rw-r--r-- 1 root root 18359581 Sep 27 14:01 overlay_off-03.mp4
+-rw-r--r-- 1 root root 18588505 Sep 27 14:02 overlay_off+06.mp4
+-rw-r--r-- 1 root root 18511276 Sep 27 14:02 overlay_off+09.mp4
+-rw-r--r-- 1 root root 18699395 Sep 27 14:02 overlay_off+12.mp4

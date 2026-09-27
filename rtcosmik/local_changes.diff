@@ -1,0 +1,64 @@
+diff --git a/settings.py b/settings.py
+index 8dff872..9db7fea 100644
+--- a/settings.py
++++ b/settings.py
+@@ -28,7 +28,7 @@ class Settings:
+     # recorded videos when SAVE_VID is on).
+ 
+     # Name of the current ONLINE recording. Ignored offline.
+-    no_trial = "test"
++    no_trial = "demo_03"
+ 
+     # Save recorded videos / CSV files during ONLINE runs.
+     # (Offline runs always write their CSV files unless --no-save is passed.)
+@@ -45,24 +45,24 @@ class Settings:
+     SAVE_DIR: str = field(init=False)    # <repo>/output/<no_trial>, online runs only
+ 
+     ### CAM PARAMS ###
+-    fs: int = 40
++    fs: int = 30
+     dt: float = field(init=False)  # Mark `dt` as excluded from the constructor
+-    width: int = 1280 # image resolution
+-    height: int = 720 # image resolution
++    width: int = 640 # image resolution
++    height: int = 480 # image resolution
+     fourcc: str = "MJPG" # video codec
+     # Which cameras to use, in order. The FIRST one is the reference frame that
+     # triangulated 3D points are expressed in before the world transform.
+     # Each id must exist in the calibration folder, and a matching detector
+     # engine must have been built for this many cameras (see fetch_models.sh).
+     # Override per run with: --cameras 0 2
+-    cameras: tuple = (0, 2, 4, 6)
++    cameras: tuple = (0,)
+ 
+     ### HUMAN ANTHROPOMETRY ###
+     # Used for ONLINE runs. Offline runs read these per participant from the
+     # dataset's metadata file instead (--subject), and only fall back to these
+     # values when no subject file is given.
+-    human_height: float = 1.80
+-    human_weight: float = 70.0 
++    human_height: float = 1.73
++    human_weight: float = 67.0 
+     human_gender: str = 'm'
+ 
+     ### VIEWER ###
+@@ -131,7 +131,7 @@ class Settings:
+                             'Right_Hip_Flexion_Extension[rad]', 'Right_Hip_Abduction_Adduction[rad]', 'Right_Hip_Internal_External_Rotation[rad]', 'Right_Knee_Flexion_Extension[rad]', 'Right_Ankle_Plantarflexion_Dorsiflexion[rad]', 'Right_Ankle_Inversion_Eversion[rad]']
+ 
+     # Ik type
+-    ik_type: str ="mhe" # either "mhe" for SWIKA or "sbs" for sample by sample qp
++    ik_type: str ="sbs" # either "mhe" for SWIKA or "sbs" for sample by sample qp
+     # fatrop only: "python" runs the CasADi function directly, "c" loads the
+     # pre-compiled OCP from <repo>/ocp/fatrop (see run_ocp_codegen.py).
+     ik_code: str = "c"
+diff --git a/src/rtcosmik/nlf/nlf.py b/src/rtcosmik/nlf/nlf.py
+index 2a52487..a018b61 100644
+--- a/src/rtcosmik/nlf/nlf.py
++++ b/src/rtcosmik/nlf/nlf.py
+@@ -1,5 +1,6 @@
+ import numpy as np
+ import torch
++import torchvision  # charge torchvision::nms, requis par le modele NLF (TorchScript)
+ from ultralytics import YOLO
+ import logging
+ import time

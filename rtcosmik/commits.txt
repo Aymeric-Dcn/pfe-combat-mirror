@@ -1,0 +1,8 @@
+== RT-COSMIK main (/root/workspace/ros_ws/RT-COSMIK-main) ==
+https://github.com/Gepetto/rt-cosmik.git
+064353f98e5397d2d8ac1e666d03cc2349fff950  2026-09-22 08:52:52 +0200  Merge pull request #13 from Gepetto/offline-paper
+
+== previous install (/root/workspace/ros_ws/RT-COSMIK) ==
+https://github.com/MaximeSabbah/RT-COSMIK.git
+bd80b0dc962128b9327a7b6bd972589aef48c293  2026-07-02 17:35:54 +0000  fix + docs for the future
+main

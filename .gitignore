@@ -1,0 +1,22 @@
+# Poids et moteurs : lourds et regenerables (fetch_models.sh / yolo export)
+*.pt
+*.onnx
+*.engine
+*.engine.meta
+*.torchscript
+# Videos : trop lourdes pour git (limite GitHub 100 Mo/fichier) -> garder dans C:\pfe
+*.mkv
+*.mp4
+*.avi
+*.tar
+# LaTeX
+docs/rapport/*.aux
+docs/rapport/*.log
+docs/rapport/*.out
+docs/rapport/*.toc
+docs/rapport/*.fls
+docs/rapport/*.fdb_latexmk
+docs/rapport/*.synctex.gz
+# Python
+__pycache__/
+*.pyc

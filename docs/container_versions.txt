@@ -1,0 +1,31 @@
+== system ==
+Ubuntu 22.04.3 LTS
+6.18.33.2-microsoft-standard-WSL2
+== gpu ==
+NVIDIA GeForce RTX 4070 SUPER, 616.92, 12282 MiB
+== ffmpeg ==
+ffmpeg version 4.4.2-0ubuntu0.22.04.1 Copyright (c) 2000-2021 the FFmpeg developers
+== camera ==
+UGREEN Camera: UGREEN Camera (usb-vhci_hcd.0-1):
+	/dev/video0
+
+exposure_dynamic_framerate: 0
+auto_exposure: 3 (Aperture Priority Mode)
+== python ==
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+python 3.10.12
+numpy                1.26.4
+torch                2.4.1+cu121
+torchvision          0.19.1+cu121
+ultralytics          8.4.159
+tensorrt             11.3.0.99
+cv2                  4.11.0
+pinocchio            3.9.0
+casadi               3.7.2
+quadprog             ok
+meshcat              ok
+pandas               2.3.3
+scipy                1.8.0
+example_robot_data   ok
+torch cuda 12.1 | gpu available: True

@@ -1,0 +1,19 @@
+demo_03 - 2026-09-27 - one UGREEN webcam, 640x480, RT-COSMIK main, IK "sbs", subject 1.73 m / 67 kg
+Free sequence of jabs and hooks (~80 s). Numbers from analyze_take.py and overlay_video.py.
+
+rows / duration / pipeline rate   1225 / 80.5 s / 15.2 Hz
+missing values (worst marker)     0.0 %
+
+segment        median    cv
+R upper arm    31.9 cm   7.8 %
+L upper arm    33.6 cm   6.3 %
+R forearm      23.6 cm   11.5 %
+L forearm      23.9 cm   10.2 %
+R thigh        47.3 cm   9.6 %
+R shank        48.5 cm   4.1 %
+
+pelvis-camera distance            1.61 m (std 15.9 cm)
+R wrist jumps > 30 cm             6 (0.5 % of rows)
+L wrist jumps > 30 cm             0
+
+overlay: counter 596 -> 3011, video 756 frames, skeleton drawn on 606 frames
