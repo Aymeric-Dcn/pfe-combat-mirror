@@ -279,7 +279,7 @@ La version \code{main} n'ouvre pas de fenêtre vidéo : la seule visualisation e
 \begin{probleme}{Squelette décalé par rapport à la vidéo}
 \symptome{Premier essai : aucun squelette dessiné. Deuxième : squelette très en retard (environ 20~s). Prise \code{demo\_02} : compteur CSV de 586 à 2231 pour seulement 473 images dans la vidéo.}
 \cause{La colonne \code{Frame\_0} compte les images lues par le processus caméra, à environ 30 par seconde. Interprétation : ffmpeg duplique les images pour tenir la cadence demandée, alors que la webcam n'en livre que 6 à 7 réelles via WSL. La vidéo \code{.mkv}, copie directe du flux de la caméra, ne contient que les images réelles, sur toute la durée de la prise. Les 586 premières valeurs du compteur correspondent aux environ 20~s de chargement de NLF et de calibration du sujet, pendant lesquelles aucune ligne n'est écrite.}
-\solution{Recaler linéairement le compteur sur la vidéo (compteur 0 = première image, compteur maximal = dernière image), avec un petit décalage réglable \code{OFFSET}. \code{overlay\_offsets.sh} génère une vidéo par valeur de décalage pour choisir la meilleure à l'\oe il. Une synchronisation exacte passera par les horodatages (piste pour le livrable~3).}
+\solution{Recaler linéairement le compteur sur la vidéo (compteur 0 = première image, compteur maximal = dernière image), avec un petit décalage réglable \code{OFFSET}. \code{overlay\_offsets.sh} génère une vidéo par valeur de décalage pour choisir la meilleure à l'\oe il. Une synchronisation exacte passera par les horodatages (piste pour le livrable~3). Sur \code{demo\_03}, un décalage nul est déjà presque juste, tandis qu'un décalage de +3 images fait précéder la vidéo par le squelette : l'optimum se situe autour d'une image (environ 0,13~s à 7,5 images réelles par seconde). Le décalage accepte donc des valeurs fractionnaires.}
 \end{probleme}
 
 % =============================================================================
@@ -306,6 +306,7 @@ Tous les scripts sont versionnés dans le dépôt \code{pfe-combat-mirror} et se
 \code{analysis/overlay\_video.py} & Vidéo avec squelette superposé et angles des coudes \\
 \code{analysis/overlay\_offsets.sh} & Une vidéo de superposition par valeur de décalage \\
 \code{tools/collect\_from\_container.sh} & Exporte du conteneur config, modifications, résultats et versions \\
+\code{tools/setup\_rtcosmik\_main.sh} & Installe RT-COSMIK \code{main}, applique les patchs, copie la calibration, télécharge les modèles \\
 \bottomrule
 \end{tabularx}
 \caption{Scripts du dépôt (dossier \code{scripts/}).}
@@ -425,7 +426,7 @@ python3 scripts/python/core/run_pipeline.py --online --cameras 0
 
 # Analyse de la prise
 python3 analyze_take.py output/demo_03
-bash overlay_offsets.sh output/demo_03 "-3 0 3 6 9 12"
+bash overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
 \end{lstlisting}
 
 \section{Modification apportée au code de RT-COSMIK}
