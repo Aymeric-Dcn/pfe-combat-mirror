@@ -1,58 +1,64 @@
-# PFE Combat Mirror — capture de mouvement du boxeur
+# PFE Combat Mirror — boxer motion capture
 
-Projet de fin d'études, Polytech Montpellier (MEA), en collaboration avec le département de Biomedical Engineering de CSULB, l'entreprise australienne [Combat Mirror](https://combatmirror.com/) et le LAAS-CNRS (équipe Gepetto).
+*[Version française](README.fr.md)*
 
-**Objectif :** instrumenter un miroir de boxe avec des capteurs de pression (intensité et position des impacts), synchroniser ces données avec la cinématique articulaire du boxeur mesurée par caméras RGB avec [RT-COSMIK](https://github.com/Gepetto/rt-cosmik), puis évaluer l'entraînement par IA (Transformer).
+Final-year project at Polytech Montpellier (MEA), with the Biomedical Engineering department of CSULB, the Australian company [Combat Mirror](https://combatmirror.com/) and LAAS-CNRS (Gepetto team).
 
-| Livrable | État (27/09/2026) |
+**Goal:** fit a boxing mirror with pressure sensors (impact strength and location), synchronize them with the boxer's joint kinematics measured by RGB cameras with [RT-COSMIK](https://github.com/Gepetto/rt-cosmik), then score the training session with a learned model (Transformer).
+
+| Deliverable | Status (2026-09-27) |
 |---|---|
-| 1. Installation de RT-COSMIK | ✅ Chaîne complète fonctionnelle avec 1 webcam : détection, squelette, modèle biomécanique, angles articulaires en CSV |
-| 2. Instrumentation du miroir | ⬜ À démarrer |
-| 3. Synchronisation + CSV | 🟡 Côté caméra prêt (`joint_angles.csv`, `markers.csv` avec compteur d'images) |
-| 4. Traitement des données (IA) | ⬜ À démarrer |
+| 1. RT-COSMIK setup | ✅ Full pipeline running with one webcam: detection, skeleton, biomechanical model, joint angles to CSV |
+| 2. Mirror instrumentation | ⬜ Not started |
+| 3. Synchronization + CSV | 🟡 Camera side ready (`joint_angles.csv`, `markers.csv` with a frame counter) |
+| 4. Data processing (ML) | ⬜ Not started |
 
-Le rapport en cours est dans [`docs/rapport/`](docs/rapport/) (LaTeX, PDF compilé inclus).
+The progress report (French, LaTeX + compiled PDF) is in [`docs/rapport/`](docs/rapport/).
 
-## Contenu
+## Layout
 
 ```
-config/cam_params/intrinsics/   calibration de la webcam (format lu par RT-COSMIK main)
-rtcosmik/patches/               modifications apportées à RT-COSMIK (à appliquer avec git apply)
-scripts/tests/                  tests unitaires : webcam, YOLO, squelette NLF, en-tête des moteurs
-scripts/calibration/            calibration intrinsèque (damier sur écran) + recalcul
-scripts/analysis/               analyse qualité d'une prise + vidéo avec squelette superposé
-scripts/tools/                  export de tout ce qui vit dans le conteneur Docker
-results/                        résultats des prises (CSV, graphes ; vidéos hors git)
-docs/                           rapport LaTeX, aide-mémoire de session, notes Docker
+config/cam_params/intrinsics/   webcam calibration (format read by RT-COSMIK main)
+rtcosmik/patches/               our changes to RT-COSMIK (git apply)
+scripts/tests/                  webcam, YOLO engine, NLF skeleton, engine header checks
+scripts/calibration/            intrinsic calibration (checkerboard on a screen) + recompute
+scripts/analysis/               take quality check + skeleton overlay video
+scripts/tools/                  RT-COSMIK main setup + export from the container
+docker/                         image built on top of cosmik-dev-container's
+results/                        takes (csv, plots; videos stay out of git)
+docs/                           report, session cheat sheet, Docker notes (French)
 ```
 
-## Démarrage rapide
+## Quick start
 
-Environnement : conteneur Docker de [cosmik-dev-container](https://github.com/MaximeSabbah/cosmik-dev-container) (CUDA 12.1, Ubuntu 22.04, ROS 2 Humble, torch 2.4.1), RT-COSMIK `main` du dépôt Gepetto. Voir [`docs/aide_memoire_session.md`](docs/aide_memoire_session.md) pour la procédure complète sous Windows/WSL2.
+Environment: the Docker image from [cosmik-dev-container](https://github.com/MaximeSabbah/cosmik-dev-container) (CUDA 12.1, Ubuntu 22.04, ROS 2 Humble, torch 2.4.1) plus Gepetto's RT-COSMIK `main`. Windows/WSL2 specifics are in [`docs/aide_memoire_session.md`](docs/aide_memoire_session.md).
 
 ```bash
-# dans le conteneur
-cd ~/workspace/ros_ws
-git clone https://github.com/Gepetto/rt-cosmik.git RT-COSMIK-main && cd RT-COSMIK-main
-git apply /chemin/vers/pfe-combat-mirror/rtcosmik/patches/*.patch     # import torchvision + settings
-BATCHES="1" bash scripts/bash/fetch_models.sh                           # poids NLF/YOLO + moteur batch 1
-apt-get install -y ffmpeg
-cp /chemin/vers/pfe-combat-mirror/config/cam_params/intrinsics/camera_0_intrinsics.yaml \
-   config/cam_params/intrinsics/
+# inside the container
+git clone https://github.com/Aymeric-Dcn/pfe-combat-mirror.git /root/pfe-combat-mirror
+bash /root/pfe-combat-mirror/scripts/tools/setup_rtcosmik_main.sh
+cd ~/workspace/ros_ws/RT-COSMIK-main
 export YOLO_VERBOSE=False
 python3 scripts/python/core/run_pipeline.py --online --cameras 0
 ```
 
-Puis, sur la prise enregistrée :
+Stand still and fully visible until `Model calibration finished`, then press `q` and `Ctrl+C` to stop. Results go to `output/<no_trial>/`.
+
+On a recorded take:
 
 ```bash
-python3 /chemin/vers/pfe-combat-mirror/scripts/analysis/analyze_take.py output/demo_03
-bash    /chemin/vers/pfe-combat-mirror/scripts/analysis/overlay_offsets.sh   output/demo_03 "-3 0 3 6 9 12"
+python3 /root/pfe-combat-mirror/scripts/analysis/analyze_take.py output/demo_03
+bash    /root/pfe-combat-mirror/scripts/analysis/overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
 ```
 
-## Références
+## Changes to RT-COSMIK
 
-- RT-COSMIK : https://github.com/Gepetto/rt-cosmik
-- Calibration caméras (LAAS) : https://github.com/Gepetto/cams_calibration
-- Publication ROS 2 : https://github.com/Gepetto/rtcosmik_ros
-- Conteneur de développement : https://github.com/MaximeSabbah/cosmik-dev-container
+- `0001-nlf-import-torchvision.patch`: the NLF TorchScript model calls `torchvision::nms`, which is only registered once `torchvision` is imported. Without it the pipeline process crashes at startup.
+- `0002-settings-single-webcam.patch`: 640x480 at 30 fps, one camera, `sbs` inverse kinematics, subject height and weight.
+
+## References
+
+- RT-COSMIK: https://github.com/Gepetto/rt-cosmik
+- Camera calibration (LAAS): https://github.com/Gepetto/cams_calibration
+- ROS 2 bridge: https://github.com/Gepetto/rtcosmik_ros
+- Dev container: https://github.com/MaximeSabbah/cosmik-dev-container
