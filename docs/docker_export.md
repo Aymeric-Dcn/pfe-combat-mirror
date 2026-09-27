@@ -25,6 +25,22 @@ Notre conteneur de travail (`90034be366af`) = cette image + nos ajouts faits à 
 
 Attention : le moteur TensorRT (`*.engine`) est lié au GPU et à la version de TensorRT. Il doit être **régénéré** sur une autre machine (`BATCHES="1" bash scripts/bash/fetch_models.sh`), quelle que soit la méthode.
 
+## Recréer notre environnement
+
+On ne maintient pas notre propre Dockerfile complet : on part de l'image de Maxime et on ajoute nos quelques éléments (ffmpeg, RT-COSMIK `main` de Gepetto, nos deux patchs, la calibration). Deux options équivalentes :
+
+- **Dans un conteneur existant** :
+  ```bash
+  git clone https://github.com/Aymeric-Dcn/pfe-combat-mirror.git /root/pfe-combat-mirror
+  bash /root/pfe-combat-mirror/scripts/tools/setup_rtcosmik_main.sh
+  ```
+- **Comme image dérivée** : `docker/Dockerfile` part de `mmpose_image` et exécute le même script. Les poids sont téléchargés au premier lancement, parce que le moteur TensorRT doit être construit sur le GPU :
+  ```bash
+  docker build -f docker/Dockerfile -t pfe_cosmik .
+  ```
+
+Le script peut être relancé sans risque : il ne refait que ce qui manque.
+
 ## Lancement sur Linux natif (Debian de Polytech)
 
 Commande du README de Maxime. `--net=host` rend Meshcat accessible directement, et `-v /dev:/dev --privileged` expose toutes les caméras, sans usbipd :

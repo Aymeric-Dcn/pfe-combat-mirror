@@ -1,0 +1,5 @@
+.git
+docs/rapport/*.pdf
+results
+*.mp4
+*.mkv
