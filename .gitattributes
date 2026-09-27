@@ -4,3 +4,4 @@
 *.patch text eol=lf
 *.png binary
 *.pdf binary
+*.ps1 text eol=crlf

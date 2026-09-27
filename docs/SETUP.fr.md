@@ -58,7 +58,13 @@ docker run -it --net=host --gpus all --privileged \
 
 **Windows (WSL 2)**
 
-La webcam est partagée avec WSL via [usbipd-win](https://github.com/dorssel/usbipd-win), avec un terminal WSL laissé ouvert :
+`scripts/tools/start_session.ps1` fait toute la mise en route : Docker Desktop, webcam attachée à WSL, conteneur démarré, caméra réglée, terminal ouvert dans RT-COSMIK.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\tools\start_session.ps1
+```
+
+À la main, la webcam est partagée avec WSL via [usbipd-win](https://github.com/dorssel/usbipd-win), avec un terminal WSL laissé ouvert :
 
 ```powershell
 usbipd list
