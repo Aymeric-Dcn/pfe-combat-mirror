@@ -30,11 +30,12 @@ cp "${main}/settings.py" "${out}/rtcosmik/settings_used.py"
 echo "[2/4] Camera calibration"
 cp "${main}"/config/cam_params/intrinsics/*.yaml "${out}/config/cam_params/intrinsics/" 2>/dev/null
 if [ -d "${main}/calib_images" ]; then
-  mkdir -p "${out}/config/calib_images"
-  cp "${main}"/calib_images/*.jpg "${out}/config/calib_images/"
+  # only the checkerboard is kept, so no face or room ends up in the repo
+  python3 "$(dirname "${BASH_SOURCE[0]}")/../calibration/mask_calib_images.py" \
+    "${main}/calib_images" "${out}/config/calib_images"
 fi
 
-echo "[3/4] Results (csv, png, test pictures; videos are left out)"
+echo "[3/4] Results (csv and png only; videos and pictures of people are left out)"
 for d in "${main}"/output/demo_*; do
   [ -d "$d" ] || continue
   r="${out}/results/$(basename "$d")"
@@ -42,8 +43,6 @@ for d in "${main}"/output/demo_*; do
   cp "$d"/*.csv "$d"/*.png "$r"/ 2>/dev/null
   ls -la "$d" > "$r/listing.txt"
 done
-mkdir -p "${out}/results/test_pictures"
-cp "${old}"/*.jpg "${main}"/*.jpg "${out}/results/test_pictures/" 2>/dev/null
 
 echo "[4/4] Software versions and hardware"
 {

@@ -1,16 +1,18 @@
 """Recompute the calibration from the saved views in calib_images/,
 dropping the worst view until the RMS error is low enough.
 
-Run from the RT-COSMIK root: python3 recalib.py
+Run from the RT-COSMIK root: python3 recalib.py [--images calib_images]
 The square size does not affect K and D, so it is not needed here.
 """
 import argparse
 import glob
+import os
 
 import cv2
 import numpy as np
 
 ap = argparse.ArgumentParser()
+ap.add_argument("--images", default="calib_images")
 ap.add_argument("--cols", type=int, default=9)
 ap.add_argument("--rows", type=int, default=6)
 ap.add_argument("--width", type=int, default=640)
@@ -26,7 +28,7 @@ objp[:, :2] = np.mgrid[0:pattern[0], 0:pattern[1]].T.reshape(-1, 2) * 0.025
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 1e-3)
 
 names, img_points = [], []
-for path in sorted(glob.glob("calib_images/*.jpg")):
+for path in sorted(glob.glob(os.path.join(args.images, "*.jpg"))):
     gray = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2GRAY)
     found, corners = cv2.findChessboardCorners(
         gray, pattern, cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)

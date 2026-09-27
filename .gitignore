@@ -20,3 +20,5 @@ docs/rapport/*.synctex.gz
 # Python
 __pycache__/
 *.pyc
+# Pictures of people stay local
+results/test_pictures/
