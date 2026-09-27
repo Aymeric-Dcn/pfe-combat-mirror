@@ -1,7 +1,8 @@
 """Draw the RT-COSMIK markers (markers.csv) on the recorded video.
 
 Run from the RT-COSMIK root: python3 overlay_video.py output/demo_03 [offset]
-Writes <run>/overlay_off<+N>.mp4. A positive offset moves the skeleton earlier.
+Writes <run>/overlay_off<+N>.mp4. The offset is in video frames and can be fractional;
+a positive offset moves the skeleton earlier.
 """
 import sys
 
@@ -10,9 +11,9 @@ import numpy as np
 import pandas as pd
 
 run = sys.argv[1] if len(sys.argv) > 1 else "output/demo_03"
-offset = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+offset = float(sys.argv[2]) if len(sys.argv) > 2 else 0.0
 calib = "config/cam_params/intrinsics/camera_0_intrinsics.yaml"
-out_path = f"{run}/overlay_off{offset:+03d}.mp4"
+out_path = f"{run}/overlay_off{offset:+.1f}.mp4"
 
 BONES = [("RSHO", "LSHO"), ("RSHO", "RELB"), ("RELB", "RWRI"), ("LSHO", "LELB"), ("LELB", "LWRI"),
          ("RASI", "LASI"), ("RSHO", "RASI"), ("LSHO", "LASI"), ("RASI", "RKNE"), ("RKNE", "RANK"),
@@ -43,7 +44,7 @@ cap.release()
 # counter 0 = first video frame, last counter value = last video frame.
 counter = mk[frame_col].to_numpy(float)
 row_frame = counter / counter.max() * (n_video - 1)
-print(f"counter {counter.min():.0f} -> {counter.max():.0f} | video {n_video} frames | offset {offset:+d}")
+print(f"counter {counter.min():.0f} -> {counter.max():.0f} | video {n_video} frames | offset {offset:+.1f}")
 
 cap = cv2.VideoCapture(f"{run}/camera_0.mkv")
 fps = cap.get(cv2.CAP_PROP_FPS) or 30
@@ -75,7 +76,7 @@ while True:
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                 y += 25
         drawn += 1
-    cv2.putText(img, f"offset {offset:+d}", (w - 110, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+    cv2.putText(img, f"offset {offset:+.1f}", (w - 120, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     out.write(img)
     i += 1
 

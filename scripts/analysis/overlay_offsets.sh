@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # One overlay video per offset, to pick the best sync by eye.
-# Run from the RT-COSMIK root: bash overlay_offsets.sh output/demo_03 "-3 0 3 6 9 12"
+# Run from the RT-COSMIK root: bash overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
 set -euo pipefail
 run="${1:-output/demo_03}"
-offsets="${2:--3 0 3 6 9 12}"
+offsets="${2:-0 0.5 1 1.5 2}"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 for o in ${offsets}; do
