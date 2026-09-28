@@ -69,14 +69,14 @@
   \large Rapport d'avancement n°1 : installation de RT-COSMIK\\ et première chaîne de capture de mouvement}
 \author{Aymeric Duchene\\ \small Polytech Montpellier, département MEA\\
   \small en collaboration avec CSULB (Biomedical Engineering), Combat Mirror et le LAAS-CNRS (Gepetto)}
-\date{27 septembre 2026}
+\date{27 septembre 2026, complété le 28 septembre 2026}
 
 \begin{document}
 \maketitle
 \thispagestyle{fancy}
 
 \begin{abstract}
-Ce document retrace la mise en place du premier livrable du projet : l'installation de RT-COSMIK, la boîte à outils du LAAS qui estime en temps réel la cinématique articulaire d'une personne filmée par des caméras RGB. Il décrit l'environnement de départ, chaque problème rencontré et sa solution, la configuration de la caméra, les scripts développés, et une première évaluation quantitative sur une prise de boxe de 80~s. À la date du rapport, la chaîne complète (caméra $\rightarrow$ détection $\rightarrow$ squelette $\rightarrow$ modèle biomécanique $\rightarrow$ angles articulaires en CSV) fonctionne avec une seule webcam, à environ 15 à 22 résultats par seconde.
+Ce document retrace la mise en place du premier livrable du projet : l'installation de RT-COSMIK, la boîte à outils du LAAS qui estime en temps réel la cinématique articulaire d'une personne filmée par des caméras RGB. Il décrit l'environnement de départ, chaque problème rencontré et sa solution, la configuration de la caméra, les scripts développés, et une première évaluation quantitative sur une prise de boxe de 80~s. À la date du rapport, la chaîne complète (caméra $\rightarrow$ détection $\rightarrow$ squelette $\rightarrow$ modèle biomécanique $\rightarrow$ angles articulaires en CSV) fonctionne avec une seule webcam, à environ 15 à 22 résultats par seconde sur le PC Windows. Le 28/09, l'installation a été portée sur la machine Debian de Polytech : après correction d'une incompatibilité entre TensorRT et le driver NVIDIA, la chaîne y traite toutes les images d'une webcam à 30~images/s (54 itérations/s possibles), avec un affichage en direct de la caméra synchronisé avec le squelette 3D.
 \end{abstract}
 
 \tableofcontents
@@ -92,9 +92,9 @@ Le projet vise à instrumenter un miroir d'entraînement de boxe fabriqué par l
 \centering
 \begin{tabular}{@{}clp{8.2cm}@{}}
 \toprule
-& \textbf{Livrable} & \textbf{État au 27/09/2026} \\
+& \textbf{Livrable} & \textbf{État au 28/09/2026} \\
 \midrule
-1 & Installation de RT-COSMIK & \textcolor{vert}{\textbf{Fonctionnel}} avec une webcam : chaîne complète jusqu'aux angles articulaires en CSV (objet de ce rapport). \\
+1 & Installation de RT-COSMIK & \textcolor{vert}{\textbf{Fonctionnel}} avec une webcam : chaîne complète jusqu'aux angles articulaires en CSV, sur le PC Windows puis sur la machine Debian de Polytech en temps réel à 30~images/s (objet de ce rapport). \\
 2 & Instrumentation du miroir & Non commencé. \\
 3 & Synchronisation et CSV & Côté caméra prêt : CSV horodatés par compteur d'images. \\
 4 & Algorithme de traitement (IA) & Non commencé, dépend du livrable 3. \\
@@ -154,10 +154,10 @@ La lecture du code de la branche \code{main} donne la chaîne de traitement suiv
   \item \textbf{Acquisition} : un processus par caméra lit le flux MJPEG de \code{/dev/video<i>} via \textbf{ffmpeg}, et non OpenCV, pour limiter la latence et enregistrer la vidéo sans ré-encodage. Une barrière synchronise les caméras.
   \item \textbf{Détection} : YOLOv10n, sous forme de moteur TensorRT, localise la personne. Le moteur est construit avec une taille de lot fixe égale au nombre de caméras (\code{yolov10n\_b<N>.engine}).
   \item \textbf{Estimation de pose} : NLF (\emph{Neural Localizer Fields}, modèle TorchScript \code{nlf\_s\_multi\_0.2.2}) prédit, dans la boîte détectée, la position 2D/3D de 43 points choisis sur le maillage SMPL-X. Ces points jouent le rôle de marqueurs anatomiques virtuels (épines iliaques, C7, épaules, épicondyles, poignets, genoux, chevilles, pieds, tête).
-  \item \textbf{Reconstruction 3D} : triangulation entre caméras, ou, avec une seule caméra, estimation 3D monoculaire de NLF.
+  \item \textbf{Reconstruction 3D} : NLF fournit pour chaque caméra une pose 3D métrique, dans le repère de cette caméra, avec une incertitude par point. Les poses des différentes caméras sont fusionnées, pondérées par l'inverse de leur incertitude. Avec une seule caméra, on garde son estimation monoculaire, dont la profondeur est moins précise. Les points sont ensuite exprimés dans le repère monde ($p_\text{monde} = R\,p_\text{caméra} + T$), puis lissés par un filtre passe-bas de Butterworth d'ordre~4 (coupure 10~Hz).
   \item \textbf{Modèle biomécanique} : un modèle humain multicorps (example-robot-data, Pinocchio) est mis à l'échelle du sujet (taille, masse) sur les premières images, pendant lesquelles le sujet reste immobile.
   \item \textbf{Cinématique inverse contrainte} : à chaque image, on cherche la configuration articulaire $q$ qui minimise l'écart entre les marqueurs du modèle et les marqueurs mesurés, sous contraintes (limites articulaires, segments rigides). Deux solveurs existent : \code{sbs} (programme quadratique image par image, quadprog) et \code{mhe} (estimation sur horizon glissant, acados ou FATROP, à précompiler).
-  \item \textbf{Sorties} : \code{joint\_angles.csv} (position et orientation du bassin, puis 36 angles articulaires en radians), \code{markers.csv} (43 marqueurs en 3D, en mètres), la vidéo \code{camera\_<i>.mkv}, et une visualisation 3D Meshcat dans le navigateur.
+  \item \textbf{Sorties} : \code{joint\_angles.csv} (position et orientation du bassin, puis 36 angles articulaires en radians), \code{markers.csv} (43 marqueurs en 3D, en mètres), la vidéo \code{camera\_<i>.mkv}, une visualisation 3D Meshcat dans le navigateur et, depuis le patch \code{0003} (section~\ref{sec:debian}), une fenêtre montrant l'image de la caméra avec les points NLF.
 \end{enumerate}
 
 % =============================================================================
@@ -282,6 +282,73 @@ La version \code{main} n'ouvre pas de fenêtre vidéo : la seule visualisation e
 \solution{Recaler linéairement le compteur sur la vidéo (compteur 0 = première image, compteur maximal = dernière image), avec un petit décalage réglable \code{OFFSET}. \code{overlay\_offsets.sh} génère une vidéo par valeur de décalage pour choisir la meilleure à l'\oe il. Une synchronisation exacte passera par les horodatages (piste pour le livrable~3). Sur \code{demo\_03}, un décalage nul est déjà presque juste, tandis qu'un décalage de +3 images fait précéder la vidéo par le squelette : l'optimum se situe autour d'une image (environ 0,13~s à 7,5 images réelles par seconde). Le décalage accepte donc des valeurs fractionnaires.}
 \end{probleme}
 
+\subsection{Portage sur la machine Debian de Polytech (28/09)}
+\label{sec:debian}
+
+Pour lever la limite de cadence due à WSL, l'installation a été reprise sur la machine Debian de Polytech, où la webcam est vue directement (\code{/dev/video0}), sans USB/IP. Docker et l'image \code{mmpose\_image} y avaient déjà été préparés.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Élément} & \textbf{Valeur} \\
+\midrule
+Hôte & Debian, poste \code{tp-autom026} \\
+GPU & NVIDIA RTX A1000, 8~Go ; driver 550.163.01 (CUDA 12.4 au maximum) \\
+Accès GPU & \code{nvidia-container-toolkit} déjà configuré : \code{nvidia-smi} fonctionne dans un conteneur \code{nvidia/cuda:12.1.1} \\
+Image Docker & \code{mmpose\_image:latest}, construite depuis le \code{Dockerfile} de \code{cosmik-dev-container} \\
+Conteneur & \code{cosmik}, créé avec \code{-{}-gpus all -{}-privileged -v /dev:/dev -{}-net=host} et l'accès à l'affichage X11 ; relancé ensuite par \code{docker start -ai cosmik} \\
+TensorRT & 10.16.1 pour CUDA~12 (pip \code{tensorrt-cu12}), à la place de la 11.3 de l'image \\
+Caméra & Webcam USB de Polytech, calibration de la webcam UGREEN utilisée provisoirement \\
+\bottomrule
+\end{tabularx}
+\caption{Environnement de la machine Debian de Polytech.}
+\end{table}
+
+\begin{probleme}{TensorRT inutilisable avec le driver de la machine}
+\symptome{\code{import tensorrt} fonctionne, mais la création d'un builder échoue : \code{cudaError 35: CUDA driver version is insufficient for CUDA runtime version}, puis \code{createInferBuilder: CUDA initialization failure}. Aucun moteur YOLO ne peut être construit.}
+\cause{Le \code{Dockerfile} installe \code{libnvinfer-bin} par apt sans fixer de version. Au moment du build, le dépôt NVIDIA fournissait TensorRT 11.3 compilé pour CUDA~13.4 (paquets \code{11.3.0.99-1+cuda13.4}). CUDA~13 exige un driver 580 ou plus récent, alors que le driver 550 de la machine s'arrête à CUDA~12.4. Le module Python se charge, mais l'initialisation de CUDA échoue.}
+\solution{Dans le conteneur, suppression des 7 paquets TensorRT CUDA~13 (\code{apt-get purge}) et installation de \code{tensorrt-cu12} 10.16 par pip. Les versions CUDA~12 fonctionnent avec tout driver à partir de la série 525 (compatibilité mineure de CUDA~12). Vérification : \code{trt.Builder(trt.Logger())} passe, NumPy reste en 1.26.4. La correction a été ajoutée à \code{setup\_rtcosmik\_main.sh} de façon conditionnelle : le script teste d'abord TensorRT et ne le remplace (en supprimant les anciens moteurs, liés à la version de TensorRT qui les a produits) que si le test échoue. Sur une machine où TensorRT fonctionne, rien ne change. \textbf{À signaler au LAAS} : fixer la version de \code{libnvinfer-bin} dans le \code{Dockerfile}.}
+\end{probleme}
+
+L'installation s'est ensuite faite en une commande avec \code{setup\_rtcosmik\_main.sh} : clone de \code{Gepetto/rt-cosmik} (\code{064353f}), application des patchs, copie de la calibration, téléchargement des poids NLF et YOLO et export du moteur \code{yolov10n\_b1.engine} en 67~s. Un conteneur trouvé sur la machine (\code{rtcosmik-dev}) était vide et lancé sans \code{-{}-privileged}, donc sans accès à la caméra ; il a été abandonné au profit d'un nouveau conteneur nommé. L'état final est sauvegardé par \code{docker commit cosmik mmpose\_image:rtcosmik-ready}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Étape} & \textbf{Debian, RTX A1000} & \textbf{Windows, RTX 4070 SUPER} \\
+\midrule
+Estimation de pose (YOLO + NLF) & 14,5~ms & 41~ms \\
+Cinématique inverse & 3,0~ms & 2,8~ms \\
+Boucle complète & 18,4~ms & 45~ms \\
+Itérations par seconde & 54 & 22 \\
+Images de la caméra traitées & 100~\% (30~images/s) & 6 à 13~images/s réelles \\
+\bottomrule
+\end{tabular}
+\caption{Temps par itération (médianes). Debian : 385 itérations, avant l'ajout de la fenêtre caméra. Windows : section précédente.}
+\label{tab:debian}
+\end{table}
+
+La webcam fournit désormais ses 30~images/s et chaque image est traitée : la limite liée à WSL est levée. L'estimation de pose est près de trois fois plus rapide sur la Debian, alors que la carte y est moins puissante ; l'environnement WSL/Docker Desktop est le premier suspect, à confirmer.
+
+\begin{probleme}{Modèle 3D allongé face au sol dans Meshcat}
+\symptome{Les points suivent correctement la personne, mais le modèle biomécanique apparaît couché, le visage vers le sol.}
+\cause{Sans pose caméra$\rightarrow$monde, le repère de la caméra sert de repère monde. En vision, ce repère a $X$ vers la droite de l'image, $Y$ vers le bas et $Z$ vers l'avant, alors que Meshcat affiche avec $Z$ vers le haut. Les angles articulaires ne sont pas affectés : ils ne dépendent que des positions relatives des marqueurs.}
+\solution{Ajout d'une pose caméra$\rightarrow$monde pour la caméra~0, dans le fichier \code{camera\_0\_extrinsics.yaml} du dossier \code{config/cam\_params/extrinsics/}, en supposant la webcam horizontale à 1,2~m du sol :
+\begin{equation}
+R = \begin{pmatrix} 0 & 0 & 1\\ -1 & 0 & 0\\ 0 & -1 & 0 \end{pmatrix},\qquad
+T = \begin{pmatrix} 0\\ 0\\ 1{,}2 \end{pmatrix}\ \text{m},
+\end{equation}
+soit $X_\text{monde} = Z_\text{caméra}$ (vers l'avant), $Y_\text{monde} = -X_\text{caméra}$, $Z_\text{monde} = -Y_\text{caméra}$ (vers le haut), avec $\det R = 1$. Le modèle est alors debout. Cette pose est approximative ; une calibration extrinsèque (marqueur ArUco) donnera la position réelle. Le script de setup copie ce fichier.}
+\end{probleme}
+
+\subsection{Affichage synchronisé caméra et squelette (28/09)}
+
+La visualisation par superposition après coup (\code{overlay\_video.py}) demandait un recalage manuel. Pour une démonstration en direct, le patch \code{rtcosmik/patches/0003-live-camera-overlay.patch} ajoute au processus pipeline une fenêtre OpenCV qui affiche, à chaque itération, l'image de la caméra avec les points 2D de NLF et la boîte de détection (fonction \code{visualize\_frames}, déjà présente dans RT-COSMIK). L'image affichée est exactement celle dont est issu le squelette envoyé à Meshcat dans la même itération : les deux vues sont synchronisées par construction. Le réglage \code{show\_video} de \code{settings.py} permet de désactiver la fenêtre. Sur la Debian, Meshcat est ouvert directement dans Firefox (\code{http://127.0.0.1:7000/static/}), grâce à \code{-{}-net=host}.
+
+\acompleter{capture d'écran de la démonstration : fenêtre caméra et Meshcat côte à côte}
+
 % =============================================================================
 \section{Scripts développés}
 % =============================================================================
@@ -306,7 +373,7 @@ Tous les scripts sont versionnés dans le dépôt \code{pfe-combat-mirror} et se
 \code{analysis/overlay\_video.py} & Vidéo avec squelette superposé et angles des coudes \\
 \code{analysis/overlay\_offsets.sh} & Une vidéo de superposition par valeur de décalage \\
 \code{tools/collect\_from\_container.sh} & Exporte du conteneur config, modifications, résultats et versions \\
-\code{tools/setup\_rtcosmik\_main.sh} & Installe RT-COSMIK \code{main}, applique les patchs, copie la calibration, télécharge les modèles \\
+\code{tools/setup\_rtcosmik\_main.sh} & Installe RT-COSMIK \code{main}, applique les patchs, copie la calibration et la pose caméra$\rightarrow$monde, remplace TensorRT s'il est incompatible avec le driver, télécharge les modèles \\
 \bottomrule
 \end{tabularx}
 \caption{Scripts du dépôt (dossier \code{scripts/}).}
@@ -387,9 +454,11 @@ Sauts du poignet $>$ 30~cm & \multicolumn{2}{r}{D : 6 (0,5~\%), G : 0} & Tous pe
 \toprule
 \textbf{Limite} & \textbf{Action prévue} \\
 \midrule
-6 à 13~fps réels (USB/IP sous WSL) ; un direct dure 1 à 2 images & Passage sur la machine Debian de Polytech (caméras en \code{/dev/video} natif, 30~fps attendus) \\
+6 à 13~fps réels (USB/IP sous WSL) ; un direct dure 1 à 2 images & \textcolor{vert}{\textbf{Résolu}} sur la Debian de Polytech : 30~images/s, toutes traitées \\
 Une seule caméra : profondeur et occultations des bras & Deuxième caméra, angles de vue écartés de 45 à 90° (par exemple en haut et sur le côté du cadre du miroir), triangulation et calibration extrinsèque avec \code{cams\_calibration} \\
-Pas de repère monde & Marqueur ArUco vu par la caméra de référence (\code{cam\_to\_world}) \\
+Repère monde approximatif (caméra supposée horizontale à 1,2~m) & Marqueur ArUco vu par la caméra de référence (\code{cam\_to\_world}) \\
+Webcam de Polytech non calibrée (calibration UGREEN utilisée) & Calibration intrinsèque avec \code{calib\_intrinsics.py} \\
+Filtre réglé pour 40~Hz (\code{system\_freq}) alors que la caméra tourne à 30~Hz & Aligner \code{system\_freq} sur la cadence réelle \\
 Centre optique décalé de 41~px & Nouvelle calibration couvrant les bords de l'image \\
 Synchronisation vidéo/CSV approximative & Horodatages communs caméra/capteurs (livrable~3) \\
 Solveur \code{sbs} & Évaluer \code{mhe} (acados, profil \code{realtime}), plus lisse \\
@@ -400,7 +469,8 @@ Solveur \code{sbs} & Évaluer \code{mhe} (acados, profil \code{realtime}), plus 
 
 \paragraph{Prochaines étapes.}
 \begin{enumerate}
-  \item Porter l'installation sur la machine Debian de Polytech (reconstruction de l'image, application des patchs, régénération du moteur TensorRT) et mesurer les fps réels.
+  \item Calibrer la webcam de Polytech et refaire l'analyse de qualité à 30~images/s.
+  \item Vérifier TensorRT sur le PC Windows avec le même test (\code{trt.Builder}) et relancer le script de setup si besoin.
   \item Refaire une prise suivant le protocole (immobilité, garde, 5 directs lents par bras, bras en croix, coups rapides) à 2,5--3~m, bien éclairée.
   \item Ajouter la seconde caméra et la calibration extrinsèque.
   \item Démarrer le livrable 2 : choix des capteurs de pression, de l'électronique d'acquisition et de leur disposition derrière le miroir.
@@ -429,7 +499,20 @@ python3 analyze_take.py output/demo_03
 bash overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
 \end{lstlisting}
 
-\section{Modification apportée au code de RT-COSMIK}
+\section*{Session sur la machine Debian de Polytech}
+
+\begin{lstlisting}[language=bash]
+# Hote : autoriser l'affichage et entrer dans le conteneur
+xhost +local: && docker start -ai cosmik
+
+# Conteneur
+cd ~/workspace/ros_ws/RT-COSMIK-main
+YOLO_VERBOSE=False python3 scripts/python/core/run_pipeline.py --online --cameras 0
+
+# Firefox sur l'hote : http://127.0.0.1:7000/static/
+\end{lstlisting}
+
+\section{Modifications apportées au code de RT-COSMIK}
 
 \begin{lstlisting}
 --- a/src/rtcosmik/nlf/nlf.py
@@ -439,6 +522,17 @@ bash overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
  import torch
 +import torchvision  # charge torchvision::nms, requis par le modele NLF (TorchScript)
  from ultralytics import YOLO
+\end{lstlisting}
+
+Patch \code{0003}, ajouté dans la boucle du processus pipeline (fichier \code{pipeline.py}) :
+
+\begin{lstlisting}[language=Python]
+if self.settings.show_video:
+    # Same frame the skeleton was solved from, so the two stay in step.
+    overlay = est.visualize_frames(frames, nlf_out, boxes=boxes,
+                                   draw_boxes=True)
+    cv2.imshow("RT-COSMIK cameras", np.hstack(overlay))
+    cv2.waitKey(1)
 \end{lstlisting}
 
 \end{document}
