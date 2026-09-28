@@ -36,6 +36,18 @@ if [[ ! -f "${calib}" ]]; then
   echo "[setup] copied webcam calibration"
 fi
 
+# The image's apt TensorRT can target a newer CUDA than the host driver supports
+# (11.x+cuda13 on a 550 driver): keep it when it works, otherwise use the cu12 wheels.
+if nvidia-smi -L >/dev/null 2>&1 \
+   && ! python3 -c "import tensorrt as t; assert t.Builder(t.Logger())" >/dev/null 2>&1; then
+  echo "[setup] TensorRT unusable with this driver, installing tensorrt-cu12 10.x"
+  pkgs="$(dpkg -l | awk '/^ii/ && /nvinfer|nvonnxparser/ {print $2}')"
+  if [[ -n "${pkgs}" ]]; then apt-get purge -y -q ${pkgs}; fi
+  python3 -m pip install -q "tensorrt-cu12>=10.3,<11"
+  # engines are tied to the TensorRT version that built them
+  rm -f "${dest}"/weights/yolo/*.engine "${dest}"/weights/yolo/*.engine.meta
+fi
+
 if [[ "${models}" == 1 ]]; then
   # needs the GPU: the TensorRT engine is built for this card and TensorRT version
   (cd "${dest}" && BATCHES="1" bash scripts/bash/fetch_models.sh)
