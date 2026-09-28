@@ -29,12 +29,15 @@ for p in "${repo}"/rtcosmik/patches/*.patch; do
   fi
 done
 
-calib="${dest}/config/cam_params/intrinsics/camera_0_intrinsics.yaml"
-if [[ ! -f "${calib}" ]]; then
-  mkdir -p "$(dirname "${calib}")"
-  cp "${repo}/config/cam_params/intrinsics/camera_0_intrinsics.yaml" "${calib}"
-  echo "[setup] copied webcam calibration"
-fi
+for rel in intrinsics/camera_0_intrinsics.yaml \
+           extrinsics/cam_to_world/camera_0/camera_0_extrinsics.yaml; do
+  target="${dest}/config/cam_params/${rel}"
+  if [[ ! -f "${target}" ]]; then
+    mkdir -p "$(dirname "${target}")"
+    cp "${repo}/config/cam_params/${rel}" "${target}"
+    echo "[setup] copied ${rel}"
+  fi
+done
 
 # The image's apt TensorRT can target a newer CUDA than the host driver supports
 # (11.x+cuda13 on a 550 driver): keep it when it works, otherwise use the cu12 wheels.
