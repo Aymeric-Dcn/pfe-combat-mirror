@@ -31,3 +31,5 @@ hardware/electronics/*.lck
 hardware/electronics/fp-info-cache
 hardware/electronics/*.kicad_prl
 hardware/electronics/.history/
+hardware/firmware/*/Debug/
+hardware/firmware/*/Release/

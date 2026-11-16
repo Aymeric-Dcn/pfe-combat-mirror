@@ -24,12 +24,14 @@ scripts/tests/                  webcam, YOLO engine, NLF skeleton, engine header
 scripts/calibration/            intrinsic calibration (checkerboard on a screen) + recompute
 scripts/analysis/               take quality check + skeleton overlay video
 scripts/tools/                  RT-COSMIK main setup + export from the container
+scripts/forceplate/             force plate acquisition, live view and calibration (PC)
 docker/                         image built on top of cosmik-dev-container's
 results/                        takes (csv, plots; videos stay out of git)
 hardware/3d/                    force plate parts (OpenSCAD): corner module, 4-sensor test rig
 hardware/simulation/            sensor conditioning simulation (ngspice)
 hardware/electronics/           sensor conditioning schematic (KiCad)
-docs/                           setup guide (EN/FR), progress report (FR)
+hardware/firmware/              Nucleo F072RB acquisition firmware (4 sensors, 2 kHz)
+docs/                           setup guide (EN/FR), progress report and calibration protocol (FR)
 ```
 
 ## Quick start

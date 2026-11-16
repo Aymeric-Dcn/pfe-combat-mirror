@@ -24,12 +24,14 @@ scripts/tests/                  tests unitaires : webcam, YOLO, squelette NLF, e
 scripts/calibration/            calibration intrinsèque (damier sur écran) + recalcul
 scripts/analysis/               analyse qualité d'une prise + vidéo avec squelette superposé
 scripts/tools/                  installation de RT-COSMIK main + export du conteneur
+scripts/forceplate/             plateau de force : acquisition, affichage et étalonnage (PC)
 docker/                         image dérivée de celle de cosmik-dev-container
 results/                        résultats des prises (CSV, graphes ; vidéos hors git)
 hardware/3d/                    pièces du plateau de force (OpenSCAD) : module de coin, banc 4 capteurs
 hardware/simulation/            simulation du conditionnement des capteurs (ngspice)
 hardware/electronics/           schéma du conditionnement des capteurs (KiCad)
-docs/                           guide d'installation (EN/FR), rapport d'avancement (FR)
+hardware/firmware/              firmware d'acquisition Nucleo F072RB (4 capteurs, 2 kHz)
+docs/                           guide d'installation (EN/FR), rapport d'avancement et protocole d'étalonnage (FR)
 ```
 
 ## Démarrage rapide
