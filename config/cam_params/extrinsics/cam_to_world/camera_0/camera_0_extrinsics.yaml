@@ -1,0 +1,7 @@
+# Level webcam, world Z up: x_w = z_cam (forward), y_w = -x_cam, z_w = -y_cam.
+# Translation = camera height above the floor, adjust if the feet float or sink.
+camera_extrinsics:
+  frame_from: camera_0
+  frame_to: world
+  rotation_matrix: [[0, 0, 1], [-1, 0, 0], [0, -1, 0]]
+  translation_vector: [0.0, 0.0, 1.2]

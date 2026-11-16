@@ -29,11 +29,26 @@ for p in "${repo}"/rtcosmik/patches/*.patch; do
   fi
 done
 
-calib="${dest}/config/cam_params/intrinsics/camera_0_intrinsics.yaml"
-if [[ ! -f "${calib}" ]]; then
-  mkdir -p "$(dirname "${calib}")"
-  cp "${repo}/config/cam_params/intrinsics/camera_0_intrinsics.yaml" "${calib}"
-  echo "[setup] copied webcam calibration"
+for rel in intrinsics/camera_0_intrinsics.yaml \
+           extrinsics/cam_to_world/camera_0/camera_0_extrinsics.yaml; do
+  target="${dest}/config/cam_params/${rel}"
+  if [[ ! -f "${target}" ]]; then
+    mkdir -p "$(dirname "${target}")"
+    cp "${repo}/config/cam_params/${rel}" "${target}"
+    echo "[setup] copied ${rel}"
+  fi
+done
+
+# The image's apt TensorRT can target a newer CUDA than the host driver supports
+# (11.x+cuda13 on a 550 driver): keep it when it works, otherwise use the cu12 wheels.
+if nvidia-smi -L >/dev/null 2>&1 \
+   && ! python3 -c "import tensorrt as t; assert t.Builder(t.Logger())" >/dev/null 2>&1; then
+  echo "[setup] TensorRT unusable with this driver, installing tensorrt-cu12 10.x"
+  pkgs="$(dpkg -l | awk '/^ii/ && /nvinfer|nvonnxparser/ {print $2}')"
+  if [[ -n "${pkgs}" ]]; then apt-get purge -y -q ${pkgs}; fi
+  python3 -m pip install -q "tensorrt-cu12>=10.3,<11"
+  # engines are tied to the TensorRT version that built them
+  rm -f "${dest}"/weights/yolo/*.engine "${dest}"/weights/yolo/*.engine.meta
 fi
 
 if [[ "${models}" == 1 ]]; then

@@ -1,0 +1,42 @@
+diff --git a/settings.py b/settings.py
+index 9db7fea..a1057fc 100644
+--- a/settings.py
++++ b/settings.py
+@@ -71,6 +71,8 @@ class Settings:
+     # tasks the table and the Franka Panda in its recorded state. Whatever the
+     # dataset does not provide is left out, and live runs show the body alone.
+     viewer_scene: bool = True
++    # Online runs: show the camera images with the NLF keypoints next to meshcat.
++    show_video: bool = True
+ 
+     ### CALIB ###
+     cam_calib_path: str = field(init=False) # relative path to the camera calibration file
+diff --git a/src/rtcosmik/pipeline/pipeline.py b/src/rtcosmik/pipeline/pipeline.py
+index 30d21b9..ae96eb9 100644
+--- a/src/rtcosmik/pipeline/pipeline.py
++++ b/src/rtcosmik/pipeline/pipeline.py
+@@ -1,3 +1,4 @@
++import cv2
+ import torch
+ import numpy as np
+ import pinocchio as pin
+@@ -225,6 +226,12 @@ class PipelineProcess(Process):
+                             display.submit(
+                                 lambda m=dict(mks_dict), qq=np.array(q, copy=True):
+                                 (viewer.display_markers(m), viewer.display_q(qq)))
++                        if self.settings.show_video:
++                            # Same frame the skeleton was solved from, so the two stay in step.
++                            overlay = est.visualize_frames(frames, nlf_out, boxes=boxes,
++                                                           draw_boxes=True)
++                            cv2.imshow("RT-COSMIK cameras", np.hstack(overlay))
++                            cv2.waitKey(1)
+                         stage_ms["display"].append(
+                             (time.perf_counter()-t_disp0)*1e3)
+                         stage_ms["wait"].append((t_wait-t_loop0)*1e3)
+@@ -248,4 +255,6 @@ class PipelineProcess(Process):
+             self._log_timing(stage_ms, skipped)
+             display.close()
+             recorder.close()
++            if self.settings.show_video:
++                cv2.destroyAllWindows()
+             self.logger.info("[INFO] Pipeline Process terminated")
