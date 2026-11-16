@@ -10,6 +10,10 @@
 .param VREFN={ternary_fcn(SEL==1, 1.03, ternary_fcn(SEL==2, 0.505, 0.103))}
 * Feedback resistor for a 3.0 V full-scale output
 .param RF={RSFS*(3.0/VREFN-1)}
+* Unloaded sensor conductance (datasheet Rev I: R > 1 Mohm at no load)
+.param G0=1u
+* Sensor + 19 cm lead capacitance (estimate)
+.param CSENS=50p
 
 * ---- Simplified rail-to-rail op-amp (MCP6004-like: 1 MHz GBW) ---------
 * Pin order: in+ in- vdd vss out
@@ -40,6 +44,9 @@ XU1 vref nm vdd 0 o1 opamp_rr
 Bfs nm 0 I = V(nm)*V(g)
 RFX nm fb 1k
 RV fb o1 {RF-1k}
+* Feedback capacitor recommended by Tekscan (datasheet Rev I)
+CF o1 nm 47p
+CS nm 0 {CSENS}
 * Anti-aliasing filter (fc ~ 480 Hz)
 RO o1 adc 1k
 CO adc 0 330n

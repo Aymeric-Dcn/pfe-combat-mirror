@@ -30,6 +30,9 @@ ngspice sim_dc.cir
 - `SEL`: JP1 position (1 = sensitive, 2 = standard, 3 = high force).
 - `RSFS`: sensor resistance at the full-scale force of the chosen mode. **Hypothesis of 10 kΩ**, to be replaced by the measured value. In high-force mode, RSFS is the resistance at ~4,400 N, much lower than in standard mode.
 - `RF` is computed automatically for a 3.0 V full-scale output.
+- `G0`: conductance of the unloaded sensor, 1 µS (the Tekscan datasheet Rev I gives R > 1 MΩ at no load). The output at rest is then V_REF × (1 + RF × G0) ≈ 0.53 V in standard mode, removed by the tare.
+- `CSENS`: capacitance of the sensor and its lead on the inverting input (50 pF, estimate).
+- `CF` (47 pF across R_F) is the feedback capacitor of the Tekscan recommended circuit (datasheet Rev I). It keeps the op-amp stable with the input capacitance; its pole (≈ 70 kHz with R_F = 49.4 kΩ) does not affect the 480 Hz filter.
 
 If `RSFS` is changed, adapt the sweep range in `sim_dc.cir` (up to about 1.2 / RSFS).
 
@@ -43,7 +46,7 @@ If `RSFS` is changed, adapt the sweep range in `sim_dc.cir` (up to about 1.2 / R
 | `v_fs` (full scale, 1e-4 S) | ≈ 3.00 V |
 | `g_sat` (output at 3.2 V) | ≈ 1.08e-4 S, i.e. about 108 % of full scale |
 | `f_cut` | ≈ 480 Hz |
-| `v_peak_adc` (80 % impact) | ≈ 2.50 V |
+| `v_peak_adc` (80 % impact, unloaded sensor 1 MΩ) | ≈ 2.52 V |
 
 Worst case (`sim_worstcase.cir`, same settings):
 
@@ -51,7 +54,7 @@ Worst case (`sim_worstcase.cir`, same settings):
 |---|---|
 | `err_h_max` (hysteresis 4.5 %) | ≈ 4.5 % of full scale, during unloading |
 | `err_w_max` (hysteresis + 5.5 % sensitivity) | ≈ 7 % of full scale, during unloading |
-| `v_peak_worst` | ≈ 2.61 V (vs 2.50 V ideal, +4.4 % of full scale) |
+| `v_peak_worst` | ≈ 2.63 V (vs 2.52 V ideal, +4.4 % of full scale) |
 
 The datasheet values (Tekscan FlexiForce A201 Rev A, typical performance) are parameters at the top of the file: `HYS` (hysteresis, 0.045) and the factor 1.055 of `Bgw` (sensitivity error of 5.5 %). The hysteresis model is a simple shape (zero at rest and at the peak, maximum at mid-load), not a measured curve.
 

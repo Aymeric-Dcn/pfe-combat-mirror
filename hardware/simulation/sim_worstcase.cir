@@ -12,7 +12,7 @@
 * Normalised impact shape (0 -> 1 -> 0 between 5 ms and 20 ms, peak at 12.5 ms)
 Bx x 0 V = sin(pi*(time-5m)/15m)*u(time-5m)*u(20m-time)
 * Ideal sensor (node g is used by the channel of conditionnement.inc)
-Bg g 0 V = 2e-7 + {GPK}*V(x)
+Bg g 0 V = {G0} + {GPK}*V(x)
 * Hysteresis: the unloading curve lies above the loading one,
 * gap = HYS * full scale at mid-load, zero at rest and at the peak
 Bgh gh 0 V = V(g) + {4*HYS/RSFS}*V(x)*(1-V(x))*u(time-12.5m)*u(20m-time)

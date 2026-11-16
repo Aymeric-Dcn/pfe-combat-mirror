@@ -146,13 +146,43 @@ La conductance du FlexiForce étant proportionnelle à la force, la sortie est \
 \caption{Modes de mesure, pour une pleine échelle de 3,0~V.}
 \end{table}
 
-Un filtre RC (1~k$\Omega$, 330~nF, coupure à 480~Hz) précède chaque entrée de l'ADC pour limiter le repliement à 2~kHz d'échantillonnage. Les sorties sont reliées aux entrées A0 à A3 de la Nucleo ; $V_{REF}$ est aussi mesurée (A4) pour que le logiciel connaisse le mode actif et le décalage à vide.
+\paragraph{Filtre de sortie.} Un filtre RC du premier ordre (1~k$\Omega$, 330~nF) précède chaque entrée de l'ADC. Sa fréquence de coupure, $f_c = 1/(2\pi RC) \approx 482$~Hz, résulte d'un compromis :
+\begin{itemize}
+  \item \textbf{conserver le signal utile} : un coup dure de 10 à 20~ms et son spectre est concentré sous 150~Hz environ ; à cette fréquence, le filtre n'atténue que de 4~\% (0,4~dB), et la simulation montre que le pic d'un impact de 15~ms n'est réduit que de 0,2~\% ;
+  \item \textbf{limiter le repliement} : avec un échantillonnage à 2~kHz, toute composante au-dessus de 1~kHz (fréquence de Nyquist) se replierait dans la bande mesurée. Le filtre atténue de 7~dB à 1~kHz, de 26~dB à 10~kHz et de 46~dB à 100~kHz, ce qui élimine le bruit haute fréquence (alimentation à découpage, rayonnements, bruit de l'amplificateur) ;
+  \item \textbf{alimenter l'ADC} : à chaque conversion, l'ADC charge brièvement un condensateur interne de quelques picofarads ; les 330~nF, 40\,000 fois plus grands, lui fournissent cette charge sans chute de tension.
+\end{itemize}
+Placer la coupure vers le quart de la fréquence d'échantillonnage laisse ainsi une marge d'un facteur trois au-dessus du contenu utile, tout en coupant plus bas que la fréquence de Nyquist. Un filtre du premier ordre reste peu sélectif près de 1~kHz ; si les essais montrent du bruit dans cette zone, l'ADC (jusqu'à 1~MS/s) permet de suréchantillonner, par exemple à 10~kHz, puis de filtrer numériquement avant de ramener les données à 2~kHz. Les sorties sont reliées aux entrées A0 à A3 de la Nucleo ; $V_{REF}$ est aussi mesurée (A4) pour que le logiciel connaisse le mode actif et le décalage à vide.
+
+\paragraph{Condensateur de contre-réaction.} Un condensateur $C_F$ de 47~pF est placé en parallèle sur $R_F$, comme dans le montage recommandé par Tekscan (fiche Rev~I). La capacité du capteur et de son câble, sur l'entrée inverseuse, retarde le signal de contre-réaction et pourrait faire sonner, voire osciller, l'amplificateur à haute fréquence ; $C_F$ court-circuite $R_F$ au-delà de quelques dizaines de kilohertz et rétablit la stabilité sans toucher au signal utile. Il ne fait pas double emploi avec le filtre de sortie : celui-ci prépare le signal pour l'ADC, $C_F$ agit sur le comportement de l'amplificateur lui-même.
+
+\paragraph{Comparaison avec le montage du constructeur.} Tekscan recommande un amplificateur \emph{inverseur} : le capteur reçoit une tension d'excitation négative, l'entrée non inverseuse est à la masse, et $V_{OUT} = -V_{exc}\,R_F/R_{capteur}$.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+ & \textbf{Fiche Rev A} & \textbf{Fiche Rev I (2024)} & \textbf{Montage retenu} \\
+\midrule
+Topologie & Inverseur & Inverseur & Non inverseur \\
+Amplificateur & MCP6004, +5~V & MCP6004 & MCP6004, 3,3~V \\
+Excitation & $-1$~V & $-$(0,25 à 1,25~V) continu, ou créneaux jusqu'à 5~V & $+V_{REF}$ : 1,03 / 0,51 / 0,10~V \\
+$R_F$ & 1 à 100~k$\Omega$ & Potentiomètre 100~k$\Omega$ & 1~k$\Omega$ + potentiomètre 100~k$\Omega$ \\
+Condensateur sur $R_F$ & -- & 47~pF & 47~pF \\
+Sortie à vide & 0~V & 0~V & $V_{REF}$ (retirée par la tare) \\
+\bottomrule
+\end{tabularx}
+\caption{Montage de conditionnement : recommandations Tekscan et montage retenu.}
+\end{table}
+
+Le principe est identique : le capteur est soumis à une tension fixe, le courant qui le traverse est proportionnel à sa conductance, et $R_F$ le convertit en tension ; le terme utile vaut $V_{exc}\,R_F/R_{capteur}$ dans les deux cas. Le montage non inverseur décale simplement l'ensemble de $V_{REF}$, ce qui évite toute tension négative et permet d'alimenter la carte par le seul 3,3~V de la Nucleo. Les règles d'extension de gamme de la fiche (réduire l'excitation et $R_F$) s'appliquent telles quelles ; les tensions des modes sensible et standard sont dans la plage recommandée, et celle du mode haute force est plus basse, comme la fiche le préconise pour aller vers 4\,448~N. Le courant dans le capteur reste inférieur à 1~mA, sous la limite de 2,5~mA.
 
 \subsection{Simulation}
 
 Le circuit est simulé sous ngspice (\code{hardware/simulation/}), le FlexiForce étant modélisé par une conductance commandée. Trois analyses vérifient la linéarité et la saturation (balayage DC), la bande passante de la chaîne (analyse AC) et la réponse à un impact de 15~ms (transitoire).
 
-Le tableau~\ref{tab:simu} donne les valeurs attendues en mode standard, pour une résistance du capteur de 10~k$\Omega$ à pleine charge (hypothèse, à remplacer par la valeur mesurée).
+Le tableau~\ref{tab:simu} donne les valeurs attendues en mode standard, pour une résistance du capteur de 10~k$\Omega$ à pleine charge (hypothèse, à remplacer par la valeur mesurée). Le circuit simulé comprend le condensateur $C_F$ et une capacité de 50~pF pour le capteur et son câble.
 
 \begin{table}[H]
 \centering
@@ -164,16 +194,16 @@ Tension à vide & 0,505~V & 0,505~V \\
 Pleine échelle & 3,00~V & 3,00~V \\
 Début de saturation & 108~\% de la pleine échelle & 108~\% \\
 Fréquence de coupure & 482~Hz & 481~Hz \\
-Pic pour un impact à 80~\% & 2,50~V & 2,50~V (à 12,8~ms) \\
+Pic pour un impact à 80~\% (capteur à vide : 1~M$\Omega$) & 2,53~V & 2,52~V (à 12,8~ms) \\
 \bottomrule
 \end{tabular}
 \caption{Résultats de simulation (mode standard, $R_F$ = 49,4~k$\Omega$).}
 \label{tab:simu}
 \end{table}
 
-Les résultats concordent avec le calcul. Le pic à l'entrée de l'ADC arrive 0,3~ms après celui de l'impact, à cause du filtre, sans perte d'amplitude.
+Les résultats concordent avec le calcul, et le condensateur $C_F$ ne modifie ni la fréquence de coupure ni la pleine échelle. Le pic à l'entrée de l'ADC arrive 0,3~ms après celui de l'impact, à cause du filtre, et ne perd que 0,2~\% d'amplitude. La tension au repos (0,53~V) dépasse légèrement $V_{REF}$ à cause de la conductance du capteur à vide ; ce décalage est retiré par la tare.
 
-\paragraph{Cas défavorable.} Ces simulations supposent un capteur idéal. Une quatrième simulation (\code{sim\_worstcase.cir}) applique le même impact à trois voies identiques : capteur idéal, capteur avec l'hystérésis de la fiche (4,5~\% de la pleine échelle à la décharge), et capteur cumulant hystérésis et erreur de sensibilité (3~\% de linéarité et 2,5~\% de répétabilité). L'erreur attendue est d'environ 4,5~\% de la pleine échelle dans le deuxième cas et 7~\% dans le troisième, au maximum pendant la décharge. Le pic de force, mesuré en fin de montée, n'est pas touché par l'hystérésis : seule l'erreur de sensibilité (environ 4,4~\%) s'y applique, et l'étalonnage la réduit.
+\paragraph{Cas défavorable.} Ces simulations supposent un capteur idéal. Une quatrième simulation (\code{sim\_worstcase.cir}) applique le même impact à trois voies identiques : capteur idéal, capteur avec l'hystérésis de la fiche (4,5~\% de la pleine échelle à la décharge), et capteur cumulant hystérésis et erreur de sensibilité (3~\% de linéarité et 2,5~\% de répétabilité). L'erreur simulée atteint 4,4~\% de la pleine échelle dans le deuxième cas et 7,2~\% dans le troisième, au maximum pendant la décharge. Le pic de force, mesuré en fin de montée, n'est pas touché par l'hystérésis : seule l'erreur de sensibilité (environ 4,4~\%) s'y applique, et l'étalonnage la réduit.
 
 En mode haute force, $R_F$ doit valoir 28 fois la résistance du capteur à 4\,400~N : la plage du potentiomètre (1 à 101~k$\Omega$) convient tant que cette résistance reste inférieure à 3,6~k$\Omega$, ce que le premier essai devra confirmer.
 
