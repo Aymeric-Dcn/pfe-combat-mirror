@@ -47,7 +47,8 @@ DEFAULT_CALIB = {
 
 
 def mode_name(vref):
-    return min(MODES, key=lambda m: abs(m[0] - vref))[1]
+    ref, name = min(MODES, key=lambda m: abs(m[0] - vref))
+    return name if abs(ref - vref) < 0.15 else "unknown: board not connected?"
 
 
 # ---------------------------------------------------------------- input
