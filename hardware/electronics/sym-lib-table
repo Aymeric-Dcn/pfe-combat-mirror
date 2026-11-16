@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "pfe_combat_mirror")(type "KiCad")(uri "${KIPRJMOD}/pfe_combat_mirror.kicad_sym")(options "")(descr "PFE Combat Mirror project symbols"))
+)

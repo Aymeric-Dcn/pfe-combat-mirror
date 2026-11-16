@@ -26,6 +26,9 @@ scripts/analysis/               analyse qualité d'une prise + vidéo avec squel
 scripts/tools/                  installation de RT-COSMIK main + export du conteneur
 docker/                         image dérivée de celle de cosmik-dev-container
 results/                        résultats des prises (CSV, graphes ; vidéos hors git)
+hardware/3d/                    pièces du plateau de force (OpenSCAD) : module de coin, banc 4 capteurs
+hardware/simulation/            simulation du conditionnement des capteurs (ngspice)
+hardware/electronics/           schéma du conditionnement des capteurs (KiCad)
 docs/                           guide d'installation (EN/FR), rapport d'avancement (FR)
 ```
 

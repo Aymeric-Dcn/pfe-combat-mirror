@@ -26,6 +26,9 @@ scripts/analysis/               take quality check + skeleton overlay video
 scripts/tools/                  RT-COSMIK main setup + export from the container
 docker/                         image built on top of cosmik-dev-container's
 results/                        takes (csv, plots; videos stay out of git)
+hardware/3d/                    force plate parts (OpenSCAD): corner module, 4-sensor test rig
+hardware/simulation/            sensor conditioning simulation (ngspice)
+hardware/electronics/           sensor conditioning schematic (KiCad)
 docs/                           setup guide (EN/FR), progress report (FR)
 ```
 

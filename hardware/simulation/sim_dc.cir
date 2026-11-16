@@ -1,0 +1,17 @@
+* DC sweep of the sensor conductance: linearity and saturation
+.include conditionnement.inc
+
+* Sensor conductance (S). Sweep from 0 to 1.2 x full scale (1/RSFS).
+* If RSFS is changed, adapt the sweep range below.
+Vg g 0 DC 0
+
+.control
+dc Vg 0 1.2e-4 5e-7
+let vout = v(adc)
+meas dc v_zero find vout at=0
+meas dc v_fs find vout at=1e-4
+meas dc g_sat when vout=3.2 rise=1
+plot vout vs v(g) title 'V_ADC vs sensor conductance' xlabel 'Conductance (S)' ylabel 'V_ADC (V)'
+wrdata dc_result.csv vout
+.endc
+.end

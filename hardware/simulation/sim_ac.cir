@@ -1,0 +1,14 @@
+* AC analysis: frequency response of the full chain (amplifier + filter)
+.include conditionnement.inc
+
+* Operating point at half scale, small conductance modulation
+Vg g 0 DC 5e-5 AC 1e-6
+
+.control
+ac dec 50 1 100k
+let gain_db = vdb(adc) - vdb(adc)[0]
+meas ac f_cut when gain_db=-3
+plot gain_db title 'Normalised response' xlabel 'Frequency (Hz)' ylabel 'Gain (dB)'
+wrdata ac_result.csv gain_db
+.endc
+.end

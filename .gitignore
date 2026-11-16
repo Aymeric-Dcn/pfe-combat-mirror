@@ -22,3 +22,12 @@ __pycache__/
 *.pyc
 # Pictures of people stay local
 results/test_pictures/
+# Simulation outputs
+hardware/simulation/*.log
+hardware/simulation/*.csv
+# KiCad temporary files
+hardware/electronics/*-backups/
+hardware/electronics/*.lck
+hardware/electronics/fp-info-cache
+hardware/electronics/*.kicad_prl
+hardware/electronics/.history/

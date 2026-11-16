@@ -1,0 +1,53 @@
+* Worst case: effect of the FlexiForce datasheet errors on an 80 % impact
+* Three identical channels receive the same 15 ms impact:
+*   ideal     : conductance strictly proportional to force (sensor of sim_tran)
+*   hyst      : + hysteresis, 4.5 % of full scale at most, on unloading
+*   worst     : + hysteresis + sensitivity error of 5.5 % (linearity 3 % + repeatability 2.5 %)
+* Datasheet values: Tekscan FlexiForce A201 Rev A (typical performance).
+.include conditionnement.inc
+
+.param GPK={0.8/RSFS}
+.param HYS=0.045
+
+* Normalised impact shape (0 -> 1 -> 0 between 5 ms and 20 ms, peak at 12.5 ms)
+Bx x 0 V = sin(pi*(time-5m)/15m)*u(time-5m)*u(20m-time)
+* Ideal sensor (node g is used by the channel of conditionnement.inc)
+Bg g 0 V = 2e-7 + {GPK}*V(x)
+* Hysteresis: the unloading curve lies above the loading one,
+* gap = HYS * full scale at mid-load, zero at rest and at the peak
+Bgh gh 0 V = V(g) + {4*HYS/RSFS}*V(x)*(1-V(x))*u(time-12.5m)*u(20m-time)
+* Hysteresis + sensitivity error of 5.5 % (1.055 = 1 + 0.03 + 0.025)
+Bgw gw 0 V = 1.055*V(gh)
+
+* Channel 2 (hysteresis), same components as channel 1
+XU2 vref nm2 vdd 0 o2 opamp_rr
+Bfs2 nm2 0 I = V(nm2)*V(gh)
+RFX2 nm2 fb2 1k
+RV2 fb2 o2 {RF-1k}
+RO2 o2 adc_h 1k
+CO2 adc_h 0 330n
+
+* Channel 3 (worst case)
+XU3 vref nm3 vdd 0 o3 opamp_rr
+Bfs3 nm3 0 I = V(nm3)*V(gw)
+RFX3 nm3 fb3 1k
+RV3 fb3 o3 {RF-1k}
+RO3 o3 adc_w 1k
+CO3 adc_w 0 330n
+
+.control
+tran 10u 40m
+* Error as a percentage of the full-scale span (3.0 V - V_REF)
+let err_h = (v(adc_h) - v(adc)) / (3.0 - v(vref)) * 100
+let err_w = (v(adc_w) - v(adc)) / (3.0 - v(vref)) * 100
+let err_h_max = vecmax(err_h)
+let err_w_max = vecmax(err_w)
+print err_h_max err_w_max
+meas tran v_peak_ideal max v(adc)
+meas tran v_peak_worst max v(adc_w)
+plot v(adc) v(adc_h) v(adc_w) title 'Ideal vs real sensor' xlabel 'Time (s)' ylabel 'V'
+plot err_h err_w title 'Error (% of full scale)' xlabel 'Time (s)'
+plot v(adc_h) vs v(adc) title 'Hysteresis loop' xlabel 'Ideal output (V)' ylabel 'Real output (V)'
+wrdata worstcase_result.csv v(adc) v(adc_h) v(adc_w) err_h err_w
+.endc
+.end

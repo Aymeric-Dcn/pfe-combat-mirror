@@ -1,5 +1,5 @@
 % =============================================================================
-%  PFE Combat Mirror - Rapport d'avancement n°1 : installation de RT-COSMIK
+%  PFE Combat Mirror - Rapport d'avancement n°2 : RT-COSMIK et plateau de force
 %  Compilation : pdflatex main.tex (x2)   ou   latexmk -pdf main.tex   (ou Overleaf)
 % =============================================================================
 \documentclass[11pt,a4paper]{article}
@@ -57,7 +57,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \lhead{\small PFE Combat Mirror}
-\rhead{\small Rapport d'avancement n°1}
+\rhead{\small Rapport d'avancement n°2}
 \cfoot{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -66,10 +66,10 @@
 
 \title{\vspace{-1cm}
   \textbf{Instrumentation d'un miroir de boxe Combat Mirror}\\[4pt]
-  \large Rapport d'avancement n°1 : installation de RT-COSMIK\\ et première chaîne de capture de mouvement}
+  \large Rapport d'avancement n°2 : capture de mouvement (RT-COSMIK)\\ et plateau de force}
 \author{Aymeric Duchene\\ \small Polytech Montpellier, département MEA\\
   \small en collaboration avec CSULB (Biomedical Engineering), Combat Mirror et le LAAS-CNRS (Gepetto)}
-\date{27 septembre 2026}
+\date{16 novembre 2026\\ \small (première version : 27 septembre 2026)}
 
 \begin{document}
 \maketitle
@@ -77,6 +77,8 @@
 
 \begin{abstract}
 Ce document retrace la mise en place du premier livrable du projet : l'installation de RT-COSMIK, la boîte à outils du LAAS qui estime en temps réel la cinématique articulaire d'une personne filmée par des caméras RGB. Il décrit l'environnement de départ, chaque problème rencontré et sa solution, la configuration de la caméra, les scripts développés, et une première évaluation quantitative sur une prise de boxe de 80~s. À la date du rapport, la chaîne complète (caméra $\rightarrow$ détection $\rightarrow$ squelette $\rightarrow$ modèle biomécanique $\rightarrow$ angles articulaires en CSV) fonctionne avec une seule webcam, à environ 15 à 22 résultats par seconde.
+
+La seconde partie (section~\ref{sec:plateau}) présente la mesure des impacts : un plateau de force de 1~m $\times$ 1~m sur capteurs FlexiForce. Elle couvre le choix des capteurs, la géométrie, la mécanique des modules de coin, le conditionnement électronique, la simulation et la méthode d'étalonnage d'un prototype à quatre capteurs, dont le matériel est commandé.
 \end{abstract}
 
 \tableofcontents
@@ -92,11 +94,11 @@ Le projet vise à instrumenter un miroir d'entraînement de boxe fabriqué par l
 \centering
 \begin{tabular}{@{}clp{8.2cm}@{}}
 \toprule
-& \textbf{Livrable} & \textbf{État au 27/09/2026} \\
+& \textbf{Livrable} & \textbf{État au 16/11/2026} \\
 \midrule
-1 & Installation de RT-COSMIK & \textcolor{vert}{\textbf{Fonctionnel}} avec une webcam : chaîne complète jusqu'aux angles articulaires en CSV (objet de ce rapport). \\
-2 & Instrumentation du miroir & Non commencé. \\
-3 & Synchronisation et CSV & Côté caméra prêt : CSV horodatés par compteur d'images. \\
+1 & Installation de RT-COSMIK & \textcolor{vert}{\textbf{Fonctionnel}} avec une webcam : chaîne complète jusqu'aux angles articulaires en CSV (sections 2 à 7). \\
+2 & Instrumentation du miroir & \textbf{En cours} : prototype de plateau de force à 4 capteurs conçu (mécanique, électronique, simulation), matériel commandé (section~\ref{sec:plateau}). \\
+3 & Synchronisation et CSV & Côté caméra prêt : CSV horodatés par compteur d'images. Côté capteurs : acquisition par une carte STM32, qui pourra aussi déclencher les caméras. \\
 4 & Algorithme de traitement (IA) & Non commencé, dépend du livrable 3. \\
 \bottomrule
 \end{tabular}
@@ -377,6 +379,8 @@ Sauts du poignet $>$ 30~cm & \multicolumn{2}{r}{D : 6 (0,5~\%), G : 0} & Tous pe
   \item Cadrage : à 1,61~m, la caméra ne couvre que $2 \times 1{,}61 \times 240/f_y \approx 1{,}56$~m en hauteur, moins que la taille du sujet. Les pieds sont donc hors champ et les jambes en partie estimées par NLF. À 2,5~m, la couverture passe à 2,43~m.
 \end{itemize}
 
+\input{plateau}
+
 % =============================================================================
 \section{Limites actuelles et suite}
 % =============================================================================
@@ -393,17 +397,28 @@ Pas de repère monde & Marqueur ArUco vu par la caméra de référence (\code{ca
 Centre optique décalé de 41~px & Nouvelle calibration couvrant les bords de l'image \\
 Synchronisation vidéo/CSV approximative & Horodatages communs caméra/capteurs (livrable~3) \\
 Solveur \code{sbs} & Évaluer \code{mhe} (acados, profil \code{realtime}), plus lisse \\
+Résistance du FlexiForce à pleine charge inconnue & Mesure au premier essai, réglage de $R_F$ et vérification du mode haute force \\
+Comportement dynamique du plateau non caractérisé & Essai au marteau ou de chute sur le banc de 300~mm \\
+Fluage des pièces imprimées sous précharge & Pastille en acier ou en résine pour les mesures \\
 \bottomrule
 \end{tabularx}
 \caption{Limites identifiées et actions correctives.}
 \end{table}
 
-\paragraph{Prochaines étapes.}
+\paragraph{Prochaines étapes : capture de mouvement.}
 \begin{enumerate}
   \item Porter l'installation sur la machine Debian de Polytech (reconstruction de l'image, application des patchs, régénération du moteur TensorRT) et mesurer les fps réels.
   \item Refaire une prise suivant le protocole (immobilité, garde, 5 directs lents par bras, bras en croix, coups rapides) à 2,5--3~m, bien éclairée.
   \item Ajouter la seconde caméra et la calibration extrinsèque.
-  \item Démarrer le livrable 2 : choix des capteurs de pression, de l'électronique d'acquisition et de leur disposition derrière le miroir.
+\end{enumerate}
+
+\paragraph{Plateau de force.}
+\begin{enumerate}
+  \item Saisir le schéma sous KiCad et réaliser la carte de conditionnement (plaque à trous, puis shield pour la Nucleo).
+  \item Imprimer les modules de coin et monter le banc d'essai de 300~mm.
+  \item Écrire le firmware d'acquisition de la Nucleo (4 voies à 2~kHz, liaison série) et le script de réception sur PC.
+  \item Mesurer la résistance réelle des capteurs, régler les gains, puis étalonner (section~\ref{sec:plateau}).
+  \item Passer au plateau de 1~m, puis synchroniser capteurs et caméras.
 \end{enumerate}
 
 \appendix

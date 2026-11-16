@@ -1,0 +1,15 @@
+* Transient: 15 ms half-sine impact at 80 % of full scale
+.include conditionnement.inc
+
+.param GPK={0.8/RSFS}
+* Unloaded sensor ~5 Mohm, impact between 5 ms and 20 ms
+Bg g 0 V = 2e-7 + {GPK}*sin(pi*(time-5m)/15m)*u(time-5m)*u(20m-time)
+
+.control
+tran 10u 40m
+meas tran v_peak_amp max v(o1)
+meas tran v_peak_adc max v(adc)
+plot v(o1) v(adc) title 'Impact response' xlabel 'Time (s)' ylabel 'V'
+wrdata tran_result.csv v(o1) v(adc)
+.endc
+.end
