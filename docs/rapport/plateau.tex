@@ -177,13 +177,53 @@ Les résultats concordent avec le calcul. Le pic à l'entrée de l'ADC arrive 0,
 
 En mode haute force, $R_F$ doit valoir 28 fois la résistance du capteur à 4\,400~N : la plage du potentiomètre (1 à 101~k$\Omega$) convient tant que cette résistance reste inférieure à 3,6~k$\Omega$, ce que le premier essai devra confirmer.
 
-\subsection{Étalonnage prévu}
+\subsection{Acquisition}
+
+\paragraph{Firmware de la Nucleo.} Le firmware (\code{hardware/firmware/nucleo\_acq/}) est un projet STM32CubeIDE écrit au niveau des registres (CMSIS, sans HAL). Il repart du projet des tutoriels STM32 de L.~Latorre réalisés en 3\textsuperscript{e} année, à l'étape « ADC multi-voies avec DMA » : la configuration de l'horloge à 48~MHz, l'organisation (\code{app/}, \code{bsp/}, \code{cmsis/}) et les pilotes existants sont conservés, et seules les fonctions nécessaires ont été adaptées.
+
+\begin{itemize}
+  \item \textbf{Échantillonnage} : le timer TIM3 déclenche toutes les 500~µs (2~kHz) une conversion des six voies de l'ADC : les quatre capteurs (A0 à A3), $V_{REF}$ (A4) et la référence interne du microcontrôleur, qui permet de mesurer la tension d'alimentation réelle et de convertir les mesures en millivolts sans dépendre de sa valeur nominale.
+  \item \textbf{Transfert} : la DMA range chaque conversion en mémoire ; son interruption de mi-tampon et de fin de tampon forme une trame par échantillon, placée dans une file circulaire.
+  \item \textbf{Envoi} : la boucle principale transmet la file au PC par la liaison série du ST-LINK (USART2, 921\,600~bauds), elle aussi par DMA. Le processeur reste presque entièrement libre.
+\end{itemize}
+
+Chaque trame (17~octets) contient un mot de synchronisation, un compteur d'échantillons, les quatre tensions des capteurs, $V_{REF}$, la tension d'alimentation et une somme de contrôle. Le compteur permet de détecter une trame perdue et fournit la base de temps de la mesure (0,5~ms par échantillon), utile pour la synchronisation avec les caméras. Le timer TIM1 et la broche PA8 restent libres pour le futur signal de déclenchement de celles-ci.
+
+\paragraph{Validation.} Le firmware a été testé sur la Nucleo, sans carte de conditionnement : sur environ 32\,000 trames consécutives (16~s), aucune trame n'a été perdue ni rejetée par la somme de contrôle, et la tension d'alimentation mesurée vaut 3,31~V. La liaison tient donc le débit de 2~kHz sur cinq voies.
+
+\paragraph{Logiciel PC.} Un script Python (\code{scripts/forceplate/forceplate.py}) reçoit et vérifie les trames, puis :
+\begin{itemize}
+  \item affiche les forces et le centre de pression en direct, et enregistre les mesures en CSV ;
+  \item détecte le mode actif à partir de $V_{REF}$ et signale un écart avec le mode d'étalonnage ;
+  \item réalise les étapes de l'étalonnage : tare, paliers de charge, ajustement des gains, correction sur une grille de points.
+\end{itemize}
+La force de chaque capteur vaut $F_k = g_k\,c_k\,(V_k - V_{0,k})$, avec $V_{0,k}$ la tension à vide (tare), $g_k$ le gain issu de l'étalonnage du capteur et $c_k$ la correction issue de l'étalonnage du plateau. Le centre de pression est la moyenne des positions des capteurs pondérée par leurs forces, calculée au-dessus de 20~N.
+
+\subsection{Étalonnage}
+
+Un protocole détaillé (\code{docs/protocole\_etalonnage.md}) décrit chaque étape, les commandes du script correspondantes et une fiche de relevés. Il se déroule en quatre temps :
 
 \begin{enumerate}
-  \item \textbf{Capteur seul}, sur un module : quelques cycles de conditionnement à environ 110~\% de la charge d'essai (recommandation Tekscan ; les valeurs de répétabilité et d'hystérésis de la fiche ne valent que pour un capteur conditionné), puis charges connues par paliers ; ajustement d'une droite par capteur, mesure de l'hystérésis et de la dérive.
-  \item \textbf{Plateau complet}, posé à plat : masse connue placée sur une grille de points ; vérification que la somme des quatre forces égale le poids et que le barycentre tombe au bon endroit ; correction des gains par moindres carrés.
-  \item \textbf{Tare à chaque démarrage} et avant chaque série, pour retirer la précharge et le poids de la plaque, et compenser la dérive sous charge constante.
-  \item \textbf{Contrôle périodique} avec une masse connue, les capteurs s'usant plus vite sous de fortes charges que dans l'essai d'endurance du constructeur (22~N).
+  \item \textbf{Réglage de chaque voie} : conditionnement du capteur (quatre à cinq charges à environ 110~\% de la charge d'essai, recommandation Tekscan ; les valeurs de répétabilité et d'hystérésis de la fiche ne valent que pour un capteur conditionné), réglage du potentiomètre pour 3,0~V à la charge maximale, puis mesure de la résistance réelle du capteur, qui remplacera l'hypothèse de 10~k$\Omega$ des simulations.
+  \item \textbf{Étalonnage de chaque capteur}, monté seul dans son module : paliers de 0 à 100~\% de la pleine échelle, en montée puis en descente, répétés trois fois. Une droite est ajustée par moindres carrés ; le script en déduit l'écart à la droite, l'hystérésis et la répétabilité. Un enregistrement de dix minutes sous charge constante mesure la dérive.
+  \item \textbf{Étalonnage du plateau assemblé} : après réglage de la précharge, une masse connue est posée sur une grille de neuf points ; les quatre gains sont corrigés par moindres carrés pour que la somme des forces égale le poids et que le centre de pression tombe sur le point.
+  \item \textbf{Vérification dynamique} : une masse lâchée d'une hauteur connue ; l'impulsion mesurée doit être comprise entre $m\sqrt{2gh}$ (pas de rebond) et $2m\sqrt{2gh}$ (rebond parfait), et le centre de pression doit tomber au point d'impact.
 \end{enumerate}
-Un essai de chute (masse connue lâchée d'une hauteur connue) complétera ces mesures statiques par une vérification dynamique.
 
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Grandeur} & \textbf{Critère d'acceptation} \\
+\midrule
+Écart à la droite d'étalonnage & < 3~\% de la pleine échelle \\
+Hystérésis & < 4,5~\% de la pleine échelle \\
+Répétabilité & < 2,5~\% de la pleine échelle \\
+Force totale sur le plateau & erreur < 5~\% \\
+Centre de pression & erreur < 10~mm \\
+\bottomrule
+\end{tabular}
+\caption{Critères d'acceptation de l'étalonnage, tirés des performances de la fiche technique.}
+\end{table}
+
+En séance, une tare est faite au démarrage et avant chaque série, pour retirer la précharge et le poids de la plaque et compenser la dérive ; un contrôle hebdomadaire avec une masse connue détecte l'usure d'un capteur, plus rapide sous de fortes charges que dans l'essai d'endurance du constructeur (22~N). Le mode haute force (jusqu'à 4\,400~N) ne peut pas être étalonné avec des masses : il nécessite une presse ou une machine d'essai avec capteur de référence, à défaut de quoi il n'est vérifié que par l'essai de chute.

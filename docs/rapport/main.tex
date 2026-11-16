@@ -78,7 +78,7 @@
 \begin{abstract}
 Ce document retrace la mise en place du premier livrable du projet : l'installation de RT-COSMIK, la boîte à outils du LAAS qui estime en temps réel la cinématique articulaire d'une personne filmée par des caméras RGB. Il décrit l'environnement de départ, chaque problème rencontré et sa solution, la configuration de la caméra, les scripts développés, et une première évaluation quantitative sur une prise de boxe de 80~s. À la date du rapport, la chaîne complète (caméra $\rightarrow$ détection $\rightarrow$ squelette $\rightarrow$ modèle biomécanique $\rightarrow$ angles articulaires en CSV) fonctionne avec une seule webcam, à environ 15 à 22 résultats par seconde sur le PC Windows. L'installation a ensuite été portée sur la machine Debian de Polytech : après correction d'une incompatibilité entre TensorRT et le driver NVIDIA, la chaîne y traite toutes les images d'une webcam à 30~images/s (54 itérations/s possibles), avec un affichage en direct de la caméra synchronisé avec le squelette 3D.
 
-La seconde partie (section~\ref{sec:plateau}) présente la mesure des impacts : un plateau de force de 1~m $\times$ 1~m sur capteurs FlexiForce. Elle couvre le choix des capteurs, la géométrie, la mécanique des modules de coin, le conditionnement électronique, la simulation et la méthode d'étalonnage d'un prototype à quatre capteurs, dont le matériel est commandé.
+La seconde partie (section~\ref{sec:plateau}) présente la mesure des impacts : un plateau de force de 1~m $\times$ 1~m sur capteurs FlexiForce. Elle couvre le choix des capteurs, la géométrie, la mécanique des modules de coin, le conditionnement électronique, la simulation, l'acquisition (firmware de la Nucleo, validé, et logiciel PC) et le protocole d'étalonnage d'un prototype à quatre capteurs, dont le matériel est commandé.
 \end{abstract}
 
 \tableofcontents
@@ -97,7 +97,7 @@ Le projet vise à instrumenter un miroir d'entraînement de boxe fabriqué par l
 & \textbf{Livrable} & \textbf{État au 16/11/2026} \\
 \midrule
 1 & Installation de RT-COSMIK & \textcolor{vert}{\textbf{Fonctionnel}} avec une webcam : chaîne complète jusqu'aux angles articulaires en CSV, sur le PC Windows puis sur la machine Debian de Polytech en temps réel à 30~images/s (sections 2 à 7). \\
-2 & Instrumentation du miroir & \textbf{En cours} : prototype de plateau de force à 4 capteurs conçu (mécanique, électronique, simulation), matériel commandé (section~\ref{sec:plateau}). \\
+2 & Instrumentation du miroir & \textbf{En cours} : prototype de plateau de force à 4 capteurs conçu (mécanique, électronique, simulation), acquisition fonctionnelle, matériel commandé (section~\ref{sec:plateau}). \\
 3 & Synchronisation et CSV & Côté caméra prêt : CSV horodatés par compteur d'images. Côté capteurs : acquisition par une carte STM32, qui pourra aussi déclencher les caméras. \\
 4 & Algorithme de traitement (IA) & Non commencé, dépend du livrable 3. \\
 \bottomrule
@@ -484,10 +484,9 @@ Fluage des pièces imprimées sous précharge & Pastille en acier ou en résine 
 
 \paragraph{Plateau de force.}
 \begin{enumerate}
-  \item Saisir le schéma sous KiCad et réaliser la carte de conditionnement (plaque à trous, puis shield pour la Nucleo).
+  \item Réaliser la carte de conditionnement d'après le schéma KiCad (plaque à trous, puis shield pour la Nucleo).
   \item Imprimer les modules de coin et monter le banc d'essai de 300~mm.
-  \item Écrire le firmware d'acquisition de la Nucleo (4 voies à 2~kHz, liaison série) et le script de réception sur PC.
-  \item Mesurer la résistance réelle des capteurs, régler les gains, puis étalonner (section~\ref{sec:plateau}).
+  \item Mesurer la résistance réelle des capteurs, régler les gains, puis étalonner selon le protocole (section~\ref{sec:plateau}).
   \item Passer au plateau de 1~m, puis synchroniser capteurs et caméras.
 \end{enumerate}
 
