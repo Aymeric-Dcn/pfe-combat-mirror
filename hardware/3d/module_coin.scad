@@ -44,8 +44,8 @@ rod_d = 5;            // M5
 rod_spacing = 48;
 nut_af = 8;           // M5 nut across flats
 nut_h = 4;
-spring_l = 15;        // spring free length
-spring_od = 10;
+spring_l = 28.5;      // spring free length (RS PRO 751-584: OD 9, wire 1 mm, 2.33 N/mm)
+spring_od = 9;
 
 /* [Upper support (strike plate side)] */
 ear_h = 6;
