@@ -207,6 +207,48 @@ Les résultats concordent avec le calcul, et le condensateur $C_F$ ne modifie ni
 
 En mode haute force, $R_F$ doit valoir 28 fois la résistance du capteur à 4\,400~N : la plage du potentiomètre (1 à 101~k$\Omega$) convient tant que cette résistance reste inférieure à 3,6~k$\Omega$, ce que le premier essai devra confirmer.
 
+\subsection{Validation sur breadboard}
+
+Avant l'arrivée des capteurs, une voie du conditionnement a été câblée sur breadboard (ampli A du MCP6004, valeurs du schéma) et alimentée en 3,3~V par une alimentation de laboratoire limitée à 30~mA. Le FlexiForce étant une résistance variable, il est remplacé par des résistances fixes de valeur connue : une résistance plus faible équivaut à une force plus grande. La résistance de contre-réaction a été réglée à $R_F = 49{,}4$~k$\Omega$, mesurée hors tension.
+
+\paragraph{Tension de référence.} Les trois positions du sélecteur de mode donnent 1,072~V, 0,500~V et 0,101~V, pour 1,031~V, 0,505~V et 0,103~V calculés. L'écart, de 1 à 4~\%, vient des tolérances des résistances du pont ; il est sans conséquence puisque $V_{REF}$ est mesurée par l'ADC et que l'étalonnage absorbe le gain réel.
+
+\paragraph{Gain et linéarité.} En mode standard ($V_{REF} = 0{,}500$~V), huit résistances de test entre 6,76~k$\Omega$ et 1~M$\Omega$ ont été placées à la place du capteur (tableau~\ref{tab:breadboard}).
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}rccr@{}}
+\toprule
+\textbf{Résistance de test} & \textbf{Mesuré} & \textbf{Calcul} & \textbf{Écart} \\
+\midrule
+aucune & 0,500~V & 0,500~V & -- \\
+1~M$\Omega$ & 0,524~V & 0,525~V & $-0{,}1$~\% \\
+98,9~k$\Omega$ & 0,74~V & 0,750~V & $-1{,}3$~\% \\
+54,7~k$\Omega$ & 0,94~V & 0,952~V & $-1{,}2$~\% \\
+47,9~k$\Omega$ & 1,01~V & 1,016~V & $-0{,}6$~\% \\
+21,7~k$\Omega$ & 1,63~V & 1,638~V & $-0{,}5$~\% \\
+15~k$\Omega$ & 2,14~V & 2,147~V & $-0{,}3$~\% \\
+9,79~k$\Omega$ & 3,01~V & 3,023~V & $-0{,}4$~\% \\
+6,76~k$\Omega$ & 3,33~V & saturation & -- \\
+\bottomrule
+\end{tabular}
+\caption{Tension de sortie (après le filtre) en fonction de la résistance de test, mode standard.}
+\label{tab:breadboard}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/mesures_linearite.pdf}
+\caption{Tension de sortie mesurée en fonction de la conductance de la résistance de test.}
+\label{fig:linearite}
+\end{figure}
+
+Tracée en fonction de la conductance $1/R$ (figure~\ref{fig:linearite}), la sortie est une droite : l'ajustement par moindres carrés donne un coefficient de détermination de 0,99998, un écart maximal de 6~mV et une pente correspondant à $R_F = 49{,}2$~k$\Omega$, à 0,4~\% de la valeur réglée. Le montage suit donc la relation $V_{OUT} = V_{REF}(1 + R_F/R_{capteur})$ : la sortie est proportionnelle à la conductance, donc à la force. Au-delà de la pleine échelle, la sortie sature proprement à la tension d'alimentation, sans oscillation.
+
+\paragraph{Bruit.} À l'oscilloscope (couplage AC, 2~mV/div, bande passante complète de 70~MHz), le bruit en sortie vaut environ 1,3~mV efficaces et 10~mV crête à crête, sans composante périodique : l'amplificateur n'oscille pas et le 50~Hz n'est pas visible. Cette valeur est un majorant, car elle inclut le bruit propre de l'oscilloscope et de la sonde sur toute leur bande, alors que le filtre de sortie coupe à 480~Hz. Rapporté à la plage utile de 2,5~V, il représente environ 0,05~\%, de l'ordre d'un pas de l'ADC.
+
+Il reste à vérifier la réponse à un échelon, les trois autres amplificateurs du boîtier et la chaîne complète jusqu'au PC, avec la Nucleo.
+
 \subsection{Acquisition}
 
 \paragraph{Firmware de la Nucleo.} Le firmware (\code{hardware/firmware/nucleo\_acq/}) est un projet STM32CubeIDE écrit au niveau des registres (CMSIS, sans HAL). Il repart du projet des tutoriels STM32 de L.~Latorre réalisés en 3\textsuperscript{e} année, à l'étape « ADC multi-voies avec DMA » : la configuration de l'horloge à 48~MHz, l'organisation (\code{app/}, \code{bsp/}, \code{cmsis/}) et les pilotes existants sont conservés, et seules les fonctions nécessaires ont été adaptées.

@@ -97,7 +97,7 @@ Le projet vise à instrumenter un miroir d'entraînement de boxe fabriqué par l
 & \textbf{Livrable} & \textbf{État au 16/11/2026} \\
 \midrule
 1 & Installation de RT-COSMIK & \textcolor{vert}{\textbf{Fonctionnel}} avec une webcam : chaîne complète jusqu'aux angles articulaires en CSV, sur le PC Windows puis sur la machine Debian de Polytech en temps réel à 30~images/s (sections 2 à 7). \\
-2 & Instrumentation du miroir & \textbf{En cours} : prototype de plateau de force à 4 capteurs conçu (mécanique, électronique, simulation), acquisition fonctionnelle, matériel commandé (section~\ref{sec:plateau}). \\
+2 & Instrumentation du miroir & \textbf{En cours} : prototype de plateau de force à 4 capteurs conçu (mécanique, électronique, simulation), acquisition fonctionnelle, conditionnement validé sur breadboard (gain, linéarité, bruit), capteurs en commande (section~\ref{sec:plateau}). \\
 3 & Synchronisation et CSV & Côté caméra prêt : CSV horodatés par compteur d'images. Côté capteurs : acquisition par une carte STM32, qui pourra aussi déclencher les caméras. \\
 4 & Algorithme de traitement (IA) & Non commencé, dépend du livrable 3. \\
 \bottomrule
@@ -484,7 +484,8 @@ Fluage des pièces imprimées sous précharge & Pastille en acier ou en résine 
 
 \paragraph{Plateau de force.}
 \begin{enumerate}
-  \item Réaliser la carte de conditionnement d'après le schéma KiCad (plaque à trous, puis shield pour la Nucleo).
+  \item Terminer la validation sur breadboard avec la Nucleo : échelon, quatre amplificateurs, chaîne complète jusqu'au PC.
+  \item Réaliser le PCB de conditionnement (shield pour la Nucleo) d'après le schéma KiCad.
   \item Imprimer les modules de coin et monter le banc d'essai de 300~mm.
   \item Mesurer la résistance réelle des capteurs, régler les gains, puis étalonner selon le protocole (section~\ref{sec:plateau}).
   \item Passer au plateau de 1~m, puis synchroniser capteurs et caméras.
