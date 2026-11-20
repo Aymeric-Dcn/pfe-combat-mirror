@@ -6,12 +6,12 @@ Final-year project at Polytech Montpellier (MEA), with the Biomedical Engineerin
 
 **Goal:** fit a boxing mirror with pressure sensors (impact strength and location), synchronize them with the boxer's joint kinematics measured by RGB cameras with [RT-COSMIK](https://github.com/Gepetto/rt-cosmik), then score the training session with a learned model (Transformer).
 
-| Deliverable | Status (2026-09-27) |
+| Deliverable | Status (2026-11-20) |
 |---|---|
-| 1. RT-COSMIK setup | ✅ Full pipeline running with one webcam: detection, skeleton, biomechanical model, joint angles to CSV |
-| 2. Mirror instrumentation | ⬜ Not started |
-| 3. Synchronization + CSV | 🟡 Camera side ready (`joint_angles.csv`, `markers.csv` with a frame counter) |
-| 4. Data processing (ML) | ⬜ Not started |
+| 1. RT-COSMIK setup | **Done.** Full pipeline with one webcam (detection, skeleton, biomechanical model, joint angles to CSV); real time at 30 fps on the Polytech Debian machine |
+| 2. Mirror instrumentation | **In progress.** 4-sensor FlexiForce force plate prototype: corner module (3D), conditioning (schematic, simulations, breadboard-validated), Nucleo firmware and PC script working; sensors on order |
+| 3. Synchronization + CSV | **In progress.** Camera side ready; force plate frames carry a 2 kHz sample counter; hardware camera trigger planned (Nucleo TIM1) |
+| 4. Data processing (ML) | Not started |
 
 The progress report (French, LaTeX + compiled PDF) is in [`docs/rapport/`](docs/rapport/).
 
@@ -54,6 +54,32 @@ On a recorded take:
 ```bash
 python3 /root/pfe-combat-mirror/scripts/analysis/analyze_take.py output/demo_03
 bash    /root/pfe-combat-mirror/scripts/analysis/overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
+```
+
+## Force plate (prototype)
+
+Four FlexiForce A201 sensors, one under each corner of a plate, give the impact force (sum) and location (centre of pressure).
+
+```
+FlexiForce -> op-amp conditioning (MCP6004, 3.3 V) -> RC filter 480 Hz -> Nucleo F072RB ADC (2 kHz) -> USB -> forceplate.py
+```
+
+| Part | Where |
+|---|---|
+| Corner module and 300 mm test rig (OpenSCAD, parametric) | [`hardware/3d/`](hardware/3d/) |
+| Conditioning schematic (KiCad) and bench test sheets | [`hardware/electronics/`](hardware/electronics/) |
+| Circuit simulations (ngspice) | [`hardware/simulation/`](hardware/simulation/) |
+| Acquisition firmware (STM32CubeIDE, register level) | [`hardware/firmware/nucleo_acq/`](hardware/firmware/nucleo_acq/) |
+| PC acquisition, live view and calibration | [`scripts/forceplate/`](scripts/forceplate/) |
+| Calibration protocol (FR) | [`docs/protocole_etalonnage.md`](docs/protocole_etalonnage.md) |
+
+Quick start: import `hardware/firmware/nucleo_acq` in STM32CubeIDE and flash it (Run), then:
+
+```bash
+pip install pyserial numpy matplotlib
+cd scripts/forceplate
+python forceplate.py -p COM4 monitor     # or /dev/ttyACM0; --sim to try without the board
+python forceplate.py -p COM4 live
 ```
 
 ## Changes to RT-COSMIK

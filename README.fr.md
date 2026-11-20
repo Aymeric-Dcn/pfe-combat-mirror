@@ -6,12 +6,12 @@ Projet de fin d'études, Polytech Montpellier (MEA), en collaboration avec le d�
 
 **Objectif :** instrumenter un miroir de boxe avec des capteurs de pression (intensité et position des impacts), synchroniser ces données avec la cinématique articulaire du boxeur mesurée par caméras RGB avec [RT-COSMIK](https://github.com/Gepetto/rt-cosmik), puis évaluer l'entraînement par IA (Transformer).
 
-| Livrable | État (27/09/2026) |
+| Livrable | État (20/11/2026) |
 |---|---|
-| 1. Installation de RT-COSMIK | ✅ Chaîne complète fonctionnelle avec 1 webcam : détection, squelette, modèle biomécanique, angles articulaires en CSV |
-| 2. Instrumentation du miroir | ⬜ À démarrer |
-| 3. Synchronisation + CSV | 🟡 Côté caméra prêt (`joint_angles.csv`, `markers.csv` avec compteur d'images) |
-| 4. Traitement des données (IA) | ⬜ À démarrer |
+| 1. Installation de RT-COSMIK | **Terminé.** Chaîne complète avec 1 webcam (détection, squelette, modèle biomécanique, angles articulaires en CSV) ; temps réel à 30 images/s sur la machine Debian de Polytech |
+| 2. Instrumentation du miroir | **En cours.** Prototype de plateau de force à 4 FlexiForce : module de coin (3D), conditionnement (schéma, simulations, validé sur breadboard), firmware Nucleo et script PC fonctionnels ; capteurs en commande |
+| 3. Synchronisation + CSV | **En cours.** Côté caméra prêt ; les trames du plateau portent un compteur d'échantillons à 2 kHz ; déclenchement matériel des caméras prévu (TIM1 de la Nucleo) |
+| 4. Traitement des données (IA) | À démarrer |
 
 Le rapport en cours est dans [`docs/rapport/`](docs/rapport/) (LaTeX, PDF compilé inclus).
 
@@ -52,6 +52,32 @@ Puis, sur la prise enregistrée :
 ```bash
 python3 /root/pfe-combat-mirror/scripts/analysis/analyze_take.py output/demo_03
 bash    /root/pfe-combat-mirror/scripts/analysis/overlay_offsets.sh output/demo_03 "0 0.5 1 1.5 2"
+```
+
+## Plateau de force (prototype)
+
+Quatre capteurs FlexiForce A201, un sous chaque coin d'une plaque, donnent la force de l'impact (somme) et sa position (centre de pression).
+
+```
+FlexiForce -> conditionnement à ampli-op (MCP6004, 3,3 V) -> filtre RC 480 Hz -> ADC Nucleo F072RB (2 kHz) -> USB -> forceplate.py
+```
+
+| Partie | Emplacement |
+|---|---|
+| Module de coin et banc d'essai 300 mm (OpenSCAD, paramétrique) | [`hardware/3d/`](hardware/3d/) |
+| Schéma du conditionnement (KiCad) et fiches de test sur banc | [`hardware/electronics/`](hardware/electronics/) |
+| Simulations du circuit (ngspice) | [`hardware/simulation/`](hardware/simulation/) |
+| Firmware d'acquisition (STM32CubeIDE, au niveau des registres) | [`hardware/firmware/nucleo_acq/`](hardware/firmware/nucleo_acq/) |
+| Acquisition, affichage et étalonnage côté PC | [`scripts/forceplate/`](scripts/forceplate/) |
+| Protocole d'étalonnage | [`docs/protocole_etalonnage.md`](docs/protocole_etalonnage.md) |
+
+Démarrage rapide : importer `hardware/firmware/nucleo_acq` dans STM32CubeIDE et flasher la carte (Run), puis :
+
+```bash
+pip install pyserial numpy matplotlib
+cd scripts/forceplate
+python forceplate.py -p COM4 monitor     # ou /dev/ttyACM0 ; --sim pour essayer sans la carte
+python forceplate.py -p COM4 live
 ```
 
 ## Références
