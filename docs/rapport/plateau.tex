@@ -247,7 +247,32 @@ Tracée en fonction de la conductance $1/R$ (figure~\ref{fig:linearite}), la sor
 
 \paragraph{Bruit.} À l'oscilloscope (couplage AC, 2~mV/div, bande passante complète de 70~MHz), le bruit en sortie vaut environ 1,3~mV efficaces et 10~mV crête à crête, sans composante périodique : l'amplificateur n'oscille pas et le 50~Hz n'est pas visible. Cette valeur est un majorant, car elle inclut le bruit propre de l'oscilloscope et de la sonde sur toute leur bande, alors que le filtre de sortie coupe à 480~Hz. Rapporté à la plage utile de 2,5~V, il représente environ 0,05~\%, de l'ordre d'un pas de l'ADC.
 
-Il reste à vérifier la réponse à un échelon, les trois autres amplificateurs du boîtier et la chaîne complète jusqu'au PC, avec la Nucleo.
+\paragraph{Courant dans le capteur.} Tekscan limite le courant dans le capteur à 2,5~mA. Dans ce montage, l'amplificateur maintient l'entrée inverseuse à $V_{REF}$ : le courant vaut $V_{REF}/R_{capteur}$, soit environ 50~µA en pleine échelle du mode standard ($R_{capteur} \approx 9{,}9$~k$\Omega$ pour 3~V en sortie) et 45~µA en mode sensible. Même capteur en court-circuit, la sortie sature et le courant reste limité par $R_F$ à environ $3{,}3~\text{V}/49{,}4~\text{k}\Omega \approx 67$~µA, soit près de 40 fois sous la limite. L'entrée non inverseuse ne consomme pas de courant : le pont de $V_{REF}$ n'est pas chargé par les capteurs. La consommation de la carte, de l'ordre du milliampère (quatre amplificateurs et le pont), est négligeable devant ce que fournit le régulateur 3,3~V de la Nucleo.
+
+\paragraph{Chaîne complète.} La voie a ensuite été reliée à la Nucleo, qui l'alimente en 3,3~V à la place de l'alimentation de laboratoire : sortie du filtre sur A0, $V_{REF}$ sur A4. Le script PC calcule, à partir de la tension lue et de $R_F$, la résistance placée à la place du capteur (tableau~\ref{tab:chaine}).
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}rccc@{}}
+\toprule
+\textbf{Résistance de test} & \textbf{Tension lue (ADC)} & \textbf{Résistance calculée} & \textbf{Écart} \\
+\midrule
+aucune & 0,497~V & > 15~M$\Omega$ & -- \\
+9,79~k$\Omega$ & 2,988~V & 9,8~k$\Omega$ & < 1~\% \\
+21,7~k$\Omega$ & 1,617~V & 21,7~k$\Omega$ & < 1~\% \\
+47,9~k$\Omega$ & 1,003~V & 47,8~k$\Omega$ & $-0{,}2$~\% \\
+15~k$\Omega$ (nominale, $\pm 5$~\%) & 2,148~V & 14,7~k$\Omega$ & $-2$~\% \\
+\bottomrule
+\end{tabular}
+\caption{Chaîne complète (conditionnement, ADC, firmware, script) : $V_{REF}$ = 0,494~V, VDDA = 3,31~V, $R_F$ = 49,4~k$\Omega$.}
+\label{tab:chaine}
+\end{table}
+
+Les tensions lues par l'ADC concordent avec celles du multimètre (tableau~\ref{tab:breadboard}), et la résistance est retrouvée à 1~\% près ; l'écart de 2~\% sur la 15~k$\Omega$, non mesurée au préalable, est dans sa tolérance. La chaîne de mesure est donc validée de bout en bout, sans réglage.
+
+Cet essai a révélé un défaut du firmware : après des branchements à chaud sur les entrées de la Nucleo, les voies A0 et A4 sont apparues permutées, jusqu'à un appui sur le bouton de réinitialisation. Le tampon de la DMA s'était décalé par rapport à l'ordre de conversion de l'ADC, et rien ne le remettait en place. Le firmware vérifie désormais chaque balayage : en cas de dépassement signalé par l'ADC, ou si la dernière case ne contient pas la référence interne (dont la valeur brute est connue à 1,2~V), le balayage est rejeté et l'ADC et la DMA redémarrent au début du tampon. Le balayage rejeté apparaît comme une trame manquante côté PC.
+
+Il reste à vérifier la réponse à un échelon et les trois autres amplificateurs du boîtier.
 
 \subsection{Acquisition}
 
@@ -279,7 +304,7 @@ Un protocole détaillé (\code{docs/protocole\_etalonnage.md}) décrit chaque é
   \item \textbf{Réglage de chaque voie} : conditionnement du capteur (quatre à cinq charges à environ 110~\% de la charge d'essai, recommandation Tekscan ; les valeurs de répétabilité et d'hystérésis de la fiche ne valent que pour un capteur conditionné), réglage du potentiomètre pour 3,0~V à la charge maximale, puis mesure de la résistance réelle du capteur, qui remplacera l'hypothèse de 10~k$\Omega$ des simulations.
   \item \textbf{Étalonnage de chaque capteur}, monté seul dans son module : paliers de 0 à 100~\% de la pleine échelle, en montée puis en descente, répétés trois fois. Une droite est ajustée par moindres carrés ; le script en déduit l'écart à la droite, l'hystérésis et la répétabilité. Un enregistrement de dix minutes sous charge constante mesure la dérive.
   \item \textbf{Étalonnage du plateau assemblé} : après réglage de la précharge, une masse connue est posée sur une grille de neuf points ; les quatre gains sont corrigés par moindres carrés pour que la somme des forces égale le poids et que le centre de pression tombe sur le point.
-  \item \textbf{Vérification dynamique} : une masse lâchée d'une hauteur connue ; l'impulsion mesurée doit être comprise entre $m\sqrt{2gh}$ (pas de rebond) et $2m\sqrt{2gh}$ (rebond parfait), et le centre de pression doit tomber au point d'impact.
+  \item \textbf{Validation dynamique} : des essais de chute vérifient la mesure d'un choc (paragraphe suivant).
 \end{enumerate}
 
 \begin{table}[H]
@@ -298,4 +323,17 @@ Centre de pression & erreur < 10~mm \\
 \caption{Critères d'acceptation de l'étalonnage, tirés des performances de la fiche technique.}
 \end{table}
 
-En séance, une tare est faite au démarrage et avant chaque série, pour retirer la précharge et le poids de la plaque et compenser la dérive ; un contrôle hebdomadaire avec une masse connue détecte l'usure d'un capteur, plus rapide sous de fortes charges que dans l'essai d'endurance du constructeur (22~N). Le mode haute force (jusqu'à 4\,400~N) ne peut pas être étalonné avec des masses : il nécessite une presse ou une machine d'essai avec capteur de référence, à défaut de quoi il n'est vérifié que par l'essai de chute.
+En séance, une tare est faite au démarrage et avant chaque série, pour retirer la précharge et le poids de la plaque et compenser la dérive ; un contrôle hebdomadaire avec une masse connue détecte l'usure d'un capteur, plus rapide sous de fortes charges que dans l'essai d'endurance du constructeur (22~N). Le mode haute force (jusqu'à 4\,400~N) ne peut pas être étalonné avec des masses : il nécessite une presse ou une machine d'essai avec capteur de référence, à défaut de quoi il n'est vérifié que par les essais de chute.
+
+\paragraph{Validation dynamique.} L'étalonnage par masses est statique, alors qu'un coup de poing dure de 10 à 30~ms. Sur proposition de F.~Bailly, des essais de chute vérifient que le plateau mesure correctement un choc, à partir de grandeurs calculables indépendamment. Une masse $m$ lâchée d'une hauteur $h$ arrive à la vitesse $v_1 = \sqrt{2gh}$ et rebondit à la vitesse $v_2$. Pendant le contact, de durée $\tau$, le bilan de quantité de mouvement donne :
+\begin{equation}
+\int F\,\mathrm{d}t - m g \tau = m\,(v_1 + v_2)
+\end{equation}
+Le plateau mesure lui-même $v_2$ : le temps de vol $t_{vol}$ entre les deux premiers contacts donne $v_2 = g\,t_{vol}/2$ et la hauteur de rebond $h_2 = g\,t_{vol}^2/8$. Chaque essai fournit ainsi :
+\begin{itemize}
+  \item le rapport entre l'impulsion mesurée et $m(v_1+v_2)$, qui vérifie le gain du plateau en dynamique ;
+  \item l'énergie dissipée, $m g (h - h_2)$, et le coefficient de restitution $v_2/v_1$ ;
+  \item l'écart entre le centre de pression au pic de force et le point de chute ;
+  \item la durée du contact et le temps de montée de la force.
+\end{itemize}
+Le plateau mesure des forces et non des énergies : l'énergie dissipée, déduite des vitesses, sert de vérification globale. L'impulsion est en revanche la grandeur la mieux mesurée, car le filtre de sortie arrondit et retarde le pic sans modifier l'aire sous la courbe. L'objet lâché doit donner un contact long devant la période d'échantillonnage : un médecine-ball ou une masse sur un tampon de mousse (10 à 30~ms, proche d'un coup) plutôt qu'une bille d'acier, dont le contact de moins d'une milliseconde serait écrasé par le filtre. La commande \code{drop} du script analyse un enregistrement et calcule toutes ces grandeurs. L'objectif est d'obtenir le bon ordre de grandeur : une erreur jusqu'à 25~\% est jugée acceptable, la déformation du gant et de la plaque absorbant de toute façon une partie de l'énergie du coup.
