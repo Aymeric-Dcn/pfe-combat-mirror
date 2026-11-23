@@ -223,8 +223,8 @@ def noconnect(pt):
 def text(s, x, y, size=1.27):
     items.append(f'(text "{s}" (exclude_from_sim no) (at {x} {y} 0) (effects (font (size {size} {size})) (justify left bottom)) (uuid "{U()}"))')
 
-FP_R = "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
-FP_C = "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm"
+FP_R = "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
+FP_C = "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P2.50mm"
 FP_RV = "Potentiometer_THT:Potentiometer_Bourns_3296W_Vertical"
 FP_U = "Package_DIP:DIP-14_W7.62mm"
 FP_J3 = "Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical"
@@ -288,10 +288,13 @@ power("power:PWR_FLAG", 124.46, 55.88); path((124.46, 55.88), (124.46, 58.42)); 
 power("power:PWR_FLAG", 132.08, 55.88); path((132.08, 55.88), (132.08, 58.42)); power("power:GND", 132.08, 58.42)
 
 # --- 4 measurement channels
+# channel -> op-amp unit, chosen for the PCB layout (A0..A3 reached without crossings)
+UNIT = {1: 3, 2: 4, 3: 1, 4: 2}
 for k, (bx, by) in enumerate([(165.1, 50.8), (243.84, 50.8), (165.1, 116.84), (243.84, 116.84)], start=1):
     text(f"Channel {k}", bx - 20.32, by - 10.16, 1.5)
-    u = place("Amplifier_Operational:MCP6004", "U1", "MCP6004", bx, by, unit=k, footprint=FP_U, ref_off=(1.27, -6.35), val_off=(1.27, 6.35))
-    pl = PINS["Amplifier_Operational:MCP6004"][k]
+    uk = UNIT[k]
+    u = place("Amplifier_Operational:MCP6004", "U1", "MCP6004", bx, by, unit=uk, footprint=FP_U, ref_off=(1.27, -6.35), val_off=(1.27, 6.35))
+    pl = PINS["Amplifier_Operational:MCP6004"][uk]
     P, M, O = u[pl[0][0]][:2], u[pl[1][0]][:2], u[pl[2][0]][:2]
     # non-inverting input to V_REF
     path(P, (bx - 10.16, P[1])); label("VREF", bx - 10.16, P[1], 180)
@@ -346,10 +349,10 @@ noconnect(j2["6"])
 text("CN8: A0/PA0  A1/PA1  A2/PA4  A3/PB0  A4/PC1  A5/PC0", 312.42, 101.6)
 
 j3 = place("Connector_Generic:Conn_01x08", "J3", "CN9 digital", 330.2, 121.92, footprint=FP_J8, ref_off=(2.54, -12.7), val_off=(2.54, 12.7))
-for n in "124567": noconnect(j3[n])
-x0, y0, _ = j3["3"]; path((x0, y0), (x0 - 7.62, y0)); label("CAM_STROBE", x0 - 7.62, y0, 180)
+for n in "123456": noconnect(j3[n])
+x0, y0, _ = j3["7"]; path((x0, y0), (x0 - 7.62, y0)); label("CAM_STROBE", x0 - 7.62, y0, 180)
 x0, y0, _ = j3["8"]; path((x0, y0), (x0 - 7.62, y0)); label("CAM_TRIG", x0 - 7.62, y0, 180)
-text("CN9: D0/PA3 D1/PA2 (ST-LINK UART, keep free)  D2/PA10 strobe in  D7/PA8 (TIM1) trigger out", 312.42, 139.7)
+text("CN9: D0/PA3 D1/PA2 (ST-LINK UART, keep free)  D6/PB10 (TIM2_CH3) strobe in  D7/PA8 (TIM1) trigger out", 312.42, 139.7)
 
 # --- camera connector
 text("Cameras", 312.42, 152.4, 1.5)
@@ -365,7 +368,7 @@ jpw = place("pfe_combat_mirror:Link", "JP2", "3V3", 50.8, 127, footprint=FP_LINK
 path(jpw["1"][:2], (40.64, 127)); label("3V3_NUCLEO", 40.64, 127, 180)
 path(jpw["2"][:2], (63.5, 127), (63.5, 124.46)); power("power:+3V3", 63.5, 124.46)
 text("JP2 closed in normal use; remove the jumper to put an ammeter in series", 30.48, 134.62)
-c3 = place("Device:C", "C3", "10u elec. (+ on 3V3)", 71.12, 132.08, footprint="Capacitor_THT:CP_Radial_D5.0mm_P2.00mm")
+c3 = place("Device:C", "C3", "10u elec. (+ on 3V3)", 71.12, 132.08, footprint="Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
 path(c3["1"][:2], (71.12, 124.46)); power("power:+3V3", 71.12, 124.46)
 path(c3["2"][:2], (71.12, 139.7)); power("power:GND", 71.12, 139.7)
 path((40.64, 149.86), (40.64, 154.94)); testpoint(40.64, 149.86, "VREF", "TP9"); label("VREF", 40.64, 154.94, 270)
@@ -380,7 +383,7 @@ text("CF across R_F: op-amp stability (Tekscan FlexiForce A201 datasheet Rev I)"
 
 out = ('(kicad_sch (version 20231120) (generator "eeschema") (generator_version "8.0") '
        f'(uuid "{ROOT}") (paper "A3") '
-       '(title_block (title "FlexiForce conditioning - 4 channels, Nucleo shield") (date "2026-11-23") (rev "3") '
+       '(title_block (title "FlexiForce conditioning - 4 channels, Nucleo shield") (date "2026-11-23") (rev "3.1") '
        '(company "Polytech Montpellier - PFE Combat Mirror") (comment 1 "A. Duchene")) '
        '(lib_symbols ' + " ".join(LIB.values()) + ') '
        + " ".join(items) +
