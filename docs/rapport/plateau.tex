@@ -272,7 +272,7 @@ Les tensions lues par l'ADC concordent avec celles du multimètre (tableau~\ref{
 
 Cet essai a révélé un défaut du firmware : après des branchements à chaud sur les entrées de la Nucleo, les voies A0 et A4 sont apparues permutées, jusqu'à un appui sur le bouton de réinitialisation. Le tampon de la DMA s'était décalé par rapport à l'ordre de conversion de l'ADC, et rien ne le remettait en place. Le firmware vérifie désormais chaque balayage : en cas de dépassement signalé par l'ADC, ou si la dernière case ne contient pas la référence interne (dont la valeur brute est connue à 1,2~V), le balayage est rejeté et l'ADC et la DMA redémarrent au début du tampon. Le balayage rejeté apparaît comme une trame manquante côté PC.
 
-\paragraph{Réponse à un échelon.} Pour observer la dynamique de la voie, la résistance de test est commutée par un bouton poussoir : 98,9~k$\Omega$ en permanence, et 21,7~k$\Omega$ ajoutée en parallèle à l'appui, soit un saut de 0,75 à 1,87~V en sortie, l'équivalent d'un coup appliqué instantanément. À l'oscilloscope (figure~\ref{fig:echelon_oscillo}, gauche), la sortie de l'amplificateur monte en 6~µs avec 0,9~\% de dépassement, et la sortie du filtre en 600~µs (de 10 à 90~\%). La vitesse de la chaîne est donc fixée par le filtre de sortie, comme prévu. Ce temps de montée correspond à une constante de temps de 0,27~ms et à une fréquence de coupure de $0{,}35/t_m \approx 580$~Hz, contre 482~Hz calculés : avec $R_O$ = 980~$\Omega$ mesurée, le condensateur vaut environ 280~nF, soit $-15$~\% sur sa valeur nominale, dans sa tolérance. Cette coupure reste bien au-dessus du contenu utile d'un coup (quelques dizaines de hertz) et sous la moitié de la fréquence d'échantillonnage (1~kHz).
+\paragraph{Réponse à un échelon.} Pour observer la dynamique de la voie, la résistance de test est commutée par un bouton poussoir : 98,9~k$\Omega$ en permanence, et 21,7~k$\Omega$ ajoutée en parallèle à l'appui, soit un saut de 0,75 à 1,87~V en sortie, l'équivalent d'un coup appliqué instantanément. À l'oscilloscope (figure~\ref{fig:echelon_oscillo}, gauche), la sortie de l'amplificateur monte en 6~µs avec 0,9~\% de dépassement, et la sortie du filtre en 600~µs (de 10 à 90~\%). La vitesse de la chaîne est donc fixée par le filtre de sortie, comme prévu. Ce temps de montée correspond à une constante de temps de 0,27~ms et à une fréquence de coupure de $0{,}35/t_m \approx 580$~Hz, contre 482~Hz calculés avec les valeurs nominales : le condensateur de ce montage valait donc environ 280~nF, $-15$~\% sous sa valeur nominale, ce qui reste dans la tolérance courante des condensateurs céramiques. Cette coupure reste bien au-dessus du contenu utile d'un coup (quelques dizaines de hertz) et sous la moitié de la fréquence d'échantillonnage (1~kHz).
 
 L'enregistrement de cinq appuis par l'ADC à 2~kHz (figure~\ref{fig:echelon_adc}) montre que tous les fronts, montants et descendants, suivent la même exponentielle : sans rebond du bouton ni dépassement. Il donne une constante de temps de 0,32~ms, cohérente avec l'oscilloscope compte tenu du faible nombre d'échantillons sur le front. Au repos, le bruit lu par l'ADC vaut 0,55~mV efficaces, moins d'un pas de conversion (0,81~mV) : nettement moins qu'à l'oscilloscope, puisque l'ADC ne voit que la bande passée par le filtre.
 
@@ -293,7 +293,25 @@ L'enregistrement de cinq appuis par l'ADC à 2~kHz (figure~\ref{fig:echelon_adc}
 
 \paragraph{Rôle de $C_F$.} Le même échelon a été observé après avoir retiré $C_F$ (figure~\ref{fig:echelon_oscillo}, droite). La sortie de l'amplificateur dépasse alors de 40~\% son niveau final, contre 0,9~\% avec le condensateur, et le palier haut devient nettement plus bruité : sans $C_F$, l'amplificateur est à la limite de l'oscillation, alors même qu'il n'est relié qu'à une résistance sur breadboard. Avec un vrai capteur et ses fils, dont la capacité s'ajoute sur l'entrée inverseuse, la situation serait pire. L'essai confirme la recommandation de Tekscan : $C_F$ est conservé sur les quatre voies. Le filtre de sortie masque ce dépassement à l'entrée de l'ADC, mais il ne supprimerait pas une oscillation entretenue.
 
-Il reste à relever la réponse en fréquence du filtre au générateur et à vérifier les trois autres amplificateurs du boîtier.
+\paragraph{Réponse en fréquence du filtre.} Le filtre de sortie a été relevé seul au générateur basse fréquence : sinus de 1~V crête à crête autour de 1,5~V appliqué sur $R_O$, sortie mesurée sur $C_O$, de 20~Hz à 5~kHz. Pour cet essai, les composants ont été mesurés avant montage : $R_O$ = 980~$\Omega$ et $C_O$ = 327~nF, soit une coupure calculée de 497~Hz. Le gain atteint $-3$~dB (rapport 0,707) à 570~Hz et la phase $-45^\circ$ à 500~Hz ; l'ajustement d'un filtre du premier ordre sur l'ensemble des phases donne 509~Hz. Jusqu'à 1~kHz, les mesures suivent la courbe calculée à 1~dB et 5° près (figure~\ref{fig:bode}), avec la pente de $-20$~dB par décade d'un premier ordre. L'écart à 5~kHz vient de la mesure crête à crête, gonflée par le bruit quand le signal ne fait plus que 120~mV.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/bode_filtre.pdf}
+\caption{Diagramme de Bode du filtre de sortie : mesures à l'oscilloscope et courbe calculée pour les valeurs mesurées des composants.}
+\label{fig:bode}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.32\textwidth]{figures/oscillo_bode_50hz.png}\hfill
+\includegraphics[width=0.32\textwidth]{figures/oscillo_bode_700hz.png}\hfill
+\includegraphics[width=0.32\textwidth]{figures/oscillo_bode_5khz.png}
+\caption{Entrée (jaune) et sortie (vert) du filtre à 50~Hz, 700~Hz et 5~kHz.}
+\label{fig:bode_oscillo}
+\end{figure}
+
+Les deux méthodes, échelon et réponse harmonique, placent la coupure entre 500 et 580~Hz selon le condensateur utilisé, au-dessus du contenu utile d'un coup et sous la moitié de la fréquence d'échantillonnage. Il reste à vérifier les trois autres amplificateurs du boîtier.
 
 \subsection{Acquisition}
 
