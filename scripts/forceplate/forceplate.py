@@ -9,6 +9,7 @@ Commands:
   fit       fit force = gain * (V - V0) for each sensor from the steps
   point     average one plate calibration point (known mass at x, y)
   fitplate  correct the 4 gains from the plate points (least squares)
+  drop      analyse a recorded drop test (impulse, rebound, energy, impact point)
 
 Use --sim instead of --port to try any command without the board.
 Requires: pyserial, numpy, matplotlib.
@@ -471,6 +472,99 @@ def cmd_live(stream, args, calib):
     del anim
 
 
+G = 9.81
+
+
+def find_impacts(t, f, threshold, merge_s=0.002):
+    """Contiguous runs of f > threshold, as (start, end) index pairs (end excluded)."""
+    above = f > threshold
+    edges = np.flatnonzero(np.diff(above.astype(int)))
+    starts = list(edges[~above[edges]] + 1)
+    ends = list(edges[above[edges]] + 1)
+    if above[0]:
+        starts.insert(0, 0)
+    if above[-1]:
+        ends.append(len(f))
+    runs = []
+    for s, e in zip(starts, ends):
+        if runs and t[s] - t[runs[-1][1] - 1] < merge_s:
+            runs[-1] = (runs[-1][0], e)
+        else:
+            runs.append((s, e))
+    return runs
+
+
+def cmd_drop(args, calib):
+    with open(args.csv) as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows or "f_total" not in rows[0]:
+        sys.exit("No force columns in this file: record it after the calibration (tare and fit).")
+    t = np.array([float(r["t_s"]) for r in rows])
+    f = np.array([float(r["f_total"]) for r in rows])
+    x = np.array([float(r["x_mm"]) if r["x_mm"] else np.nan for r in rows])
+    y = np.array([float(r["y_mm"]) if r["y_mm"] else np.nan for r in rows])
+
+    base = np.median(f[t < t[0] + args.rest])
+    f = f - base
+    runs = find_impacts(t, f, args.threshold)
+    if not runs:
+        sys.exit(f"No impact above {args.threshold} N.")
+
+    m, h = args.mass, args.height / 100
+    v1 = math.sqrt(2 * G * h)
+    s, e = runs[0]
+    dt = 1 / SAMPLE_RATE
+    duration = (e - s) * dt
+    k = s + int(np.argmax(f[s:e]))
+    impulse = float(f[s:e].sum() * dt)
+    momentum = impulse - m * G * duration          # weight acts during the contact too
+
+    print(f"Baseline before the drop: {base:.1f} N (should be close to 0 after the tare)")
+    print(f"Impact 1 at t = {t[s]:.4f} s")
+    print(f"  duration          {duration * 1e3:.1f} ms (above {args.threshold} N)")
+    print(f"  peak force        {f[k]:.0f} N at t = {t[k]:.4f} s "
+          f"({(t[k] - t[s]) * 1e3:.1f} ms after the start)")
+    print(f"  impulse           {impulse:.3f} N.s (minus weight: {momentum:.3f} N.s)")
+    if not np.isnan(x[k]):
+        print(f"  centre of pressure at the peak: x = {x[k]:.0f} mm, y = {y[k]:.0f} mm")
+        if args.x is not None and args.y is not None:
+            print(f"  distance to the drop point: {math.hypot(x[k] - args.x, y[k] - args.y):.0f} mm")
+
+    print(f"Expected speed at impact: v1 = sqrt(2gh) = {v1:.2f} m/s, m.v1 = {m * v1:.3f} N.s")
+    if len(runs) > 1:
+        flight = t[runs[1][0]] - t[e - 1]
+        v2 = G * flight / 2
+        h2 = G * flight ** 2 / 8
+        expected = m * (v1 + v2)
+        lost = 1 - h2 / h
+        print(f"Rebound: flight time {flight * 1e3:.0f} ms -> v2 = {v2:.2f} m/s, "
+              f"height {h2 * 100:.1f} cm, restitution e = {v2 / v1:.2f}")
+        print(f"Expected impulse m.(v1 + v2) = {expected:.3f} N.s")
+        print(f"Measured / expected = {momentum / expected:.3f} "
+              f"(error {100 * (momentum / expected - 1):+.1f} %)")
+        print(f"Energy: {m * G * h:.2f} J at impact, {m * G * h2:.2f} J after the rebound, "
+              f"{m * G * (h - h2):.2f} J dissipated ({100 * lost:.0f} %)")
+    else:
+        print("No rebound detected: the impulse should be between m.v1 and 2.m.v1 "
+              f"({m * v1:.3f} to {2 * m * v1:.3f} N.s), measured {momentum:.3f} N.s")
+
+    if args.plot:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        end = runs[1][1] if len(runs) > 1 else e
+        sel = (t > t[s] - 0.05) & (t < t[min(end, len(t) - 1)] + 0.05)
+        fig, ax = plt.subplots(figsize=(8, 3.5))
+        ax.plot((t[sel] - t[s]) * 1e3, f[sel], lw=1)
+        ax.axhline(args.threshold, color="gray", lw=0.8, ls="--")
+        ax.set_xlabel("time from the impact (ms)")
+        ax.set_ylabel("total force (N)")
+        ax.grid(alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(args.plot, dpi=150)
+        print(f"Saved {args.plot}")
+
+
 # ---------------------------------------------------------------- main
 
 
@@ -508,9 +602,20 @@ def main():
     s.add_argument("--points", default="points.csv")
     s = sub.add_parser("fitplate")
     s.add_argument("--points", default="points.csv")
+    s = sub.add_parser("drop")
+    s.add_argument("csv", help="file written by record")
+    s.add_argument("--mass", type=float, required=True, help="dropped mass in kg")
+    s.add_argument("--height", type=float, required=True, help="drop height in cm (bottom of the object)")
+    s.add_argument("--x", type=float, help="drop point in mm, to check the centre of pressure")
+    s.add_argument("--y", type=float)
+    s.add_argument("--threshold", type=float, default=10, help="contact detection threshold in N")
+    s.add_argument("--rest", type=float, default=0.2, help="seconds at the start used as the baseline")
+    s.add_argument("--plot", help="PNG file of the impact")
     args = p.parse_args()
 
     calib = load_calib(args.calib)
+    if args.cmd == "drop":
+        return cmd_drop(args, calib)
     if args.cmd == "fit":
         return cmd_fit(args, calib)
     if args.cmd == "fitplate":

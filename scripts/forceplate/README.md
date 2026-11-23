@@ -24,6 +24,7 @@ python forceplate.py -p COM5 step --sensor 1 --load 98.1 --dir up
 python forceplate.py fit                          # gains from steps.csv
 python forceplate.py -p COM5 point --x 50 --y -50 --mass 10
 python forceplate.py fitplate                     # gain corrections from points.csv
+python forceplate.py drop chute.csv --mass 3 --height 50 --x 0 --y 0 --plot chute.png
 ```
 
 Replace `-p COM5` with `--sim` to try any command without the board (simulated data: one 600 N punch per second after 2.5 s at rest).

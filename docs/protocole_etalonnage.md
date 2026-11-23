@@ -2,7 +2,7 @@
 
 **Projet :** PFE Combat Mirror — Polytech Montpellier, MEA
 **Auteur :** Aymeric Duchene
-**Date :** 16 novembre 2026 (v1)
+**Date :** 23 novembre 2026 (v2 : validation dynamique)
 **Documents associés :** conditionnement des capteurs, `hardware/firmware/nucleo_acq`, `scripts/forceplate`
 
 ---
@@ -13,7 +13,7 @@ Ce protocole décrit comment étalonner le prototype de plateau de force à quat
 
 1. caractériser et étalonner chaque capteur seul, monté dans son module de coin ;
 2. étalonner le plateau assemblé (force totale et position du centre de pression) ;
-3. vérifier la réponse à un impact.
+3. valider la mesure des chocs par des essais de chute (impulsion, rebond, point d'impact).
 
 Il en ressort un fichier `calibration.json` utilisé par le script d'acquisition, et une fiche de relevés (§ 11).
 
@@ -44,7 +44,7 @@ Les critères d'acceptation reprennent les performances typiques de la fiche tec
 
 1 kg correspond à 9,81 N. En mode standard, la pleine échelle visée (≈ 445 N) correspond à environ 45 kg. Si les masses disponibles sont plus faibles, la pleine échelle d'étalonnage est la plus grande charge disponible, et les pourcentages ci-dessous s'y rapportent.
 
-**Mode haute force :** les charges jusqu'à 4 400 N (≈ 450 kg) ne s'obtiennent pas avec des masses. Il faut une presse ou une machine d'essai avec capteur de référence (à demander au laboratoire de mécanique). À défaut, ce mode est vérifié par l'essai de chute (§ 9) seulement.
+**Mode haute force :** les charges jusqu'à 4 400 N (≈ 450 kg) ne s'obtiennent pas avec des masses. Il faut une presse ou une machine d'essai avec capteur de référence (à demander au laboratoire de mécanique). À défaut, ce mode est vérifié par les essais de chute (§ 9) seulement.
 
 ---
 
@@ -57,6 +57,7 @@ Les critères d'acceptation reprennent les performances typiques de la fiche tec
    - VDDA ≈ 3,3 V ;
    - à vide, chaque voie ≈ V_REF ;
    - `gaps=0 bad=0` (aucune trame perdue).
+   - Si les voies semblent mélangées (V_REF affichée en « unknown », valeurs qui ne suivent pas le montage), appuyer sur le bouton RESET noir de la Nucleo et relancer.
 4. Laisser le montage sous tension 10 minutes avant toute mesure, et noter la température.
 5. Travailler dans un dossier de données dédié (par exemple `data/etalonnage_AAAAMMJJ/`), dans lequel les fichiers sont écrits.
 
@@ -146,16 +147,69 @@ La fiche annonce moins de 5 % par décade de temps : de 10 s à 600 s (1,8 déca
 
 ---
 
-## 9. Vérification dynamique : essai de chute
+## 9. Validation dynamique : essais de chute
 
-1. Lâcher une masse connue m (par exemple un médecine-ball de 3 kg) d'une hauteur connue h, au centre du plateau, en enregistrant :
-   `python forceplate.py -p COMx record -d 10 -o chute_h50.csv`
-2. Dans le fichier, calculer l'impulsion du premier choc, I = ∫ F dt, et la comparer à la quantité de mouvement à l'impact, m·√(2gh) :
-   - I doit être compris entre m·√(2gh) (aucun rebond) et 2·m·√(2gh) (rebond parfait) ;
-   - le centre de pression au pic doit tomber au point d'impact.
-3. Répéter à plusieurs hauteurs (25, 50, 100 cm) et vérifier qu'aucune voie ne sature (sortie < 3,25 V). En cas de saturation, passer en mode haute force.
+Les § 6 à 8 étalonnent le plateau en statique. Un coup de poing dure de 10 à 30 ms : ces essais vérifient que le plateau mesure correctement un choc, avec des grandeurs que l'on peut calculer indépendamment. Ils suivent la proposition de F. Bailly (point du 23/11). L'objectif fixé est d'obtenir le bon ordre de grandeur, avec une erreur tolérée jusqu'à 25 % : le gant et la plaque se déforment et dissipent une partie de l'énergie.
 
----
+### 9.1 Principe
+
+Une masse m lâchée d'une hauteur h arrive sur le plateau à la vitesse v₁ = √(2gh). Pendant le contact, de durée τ, le plateau mesure la force totale F(t). Le bilan de quantité de mouvement donne :
+
+  ∫ F dt − m·g·τ = m·(v₁ + v₂)
+
+où v₂ est la vitesse de rebond. Le plateau mesure aussi v₂ sans autre instrument : le temps de vol t_vol entre la fin du premier contact et le début du second donne
+
+  v₂ = g·t_vol / 2  et  h_rebond = g·t_vol² / 8.
+
+On en déduit :
+
+| Grandeur | Formule | Ce qu'elle vérifie |
+|---|---|---|
+| Impulsion | ∫ F dt − m·g·τ, comparée à m·(v₁ + v₂) | gain du plateau en dynamique (essai principal) |
+| Coefficient de restitution | e = v₂ / v₁ | cohérence du rebond |
+| Énergie dissipée | m·g·(h − h_rebond) | ordre de grandeur de l'énergie absorbée par le plateau et l'objet |
+| Point d'impact | centre de pression au pic de force | étalonnage des positions |
+| Durée de contact, temps de montée | lus sur F(t) | réponse temporelle de la chaîne |
+
+Le plateau mesure des forces, pas des énergies : l'énergie dissipée se déduit des vitesses, elle sert de vérification globale. L'impulsion, en revanche, est la grandeur la mieux mesurée : le filtre de sortie (coupure à 480 Hz) arrondit et retarde le pic, mais ne change pas l'aire sous la courbe.
+
+### 9.2 Choix de l'objet
+
+La durée du contact doit rester grande devant la période d'échantillonnage (0,5 ms) et le temps de réponse du filtre (≈ 0,3 ms) :
+
+| Objet | Durée de contact | Usage |
+|---|---|---|
+| Médecine-ball (2 à 5 kg) | 10 à 30 ms | essai principal, proche d'un coup de poing |
+| Masse posée sur un tampon de mousse ou de caoutchouc | 10 à 50 ms selon le tampon | variante si pas de médecine-ball |
+| Gant de boxe lesté | proche du coup réel | essai le plus représentatif |
+| Bille d'acier | < 1 ms | point d'impact et impulsion seulement : le pic est écrasé par le filtre |
+
+Peser l'objet sur une balance avant l'essai. La hauteur h est mesurée entre le bas de l'objet et la surface du plateau.
+
+### 9.3 Déroulement
+
+1. Plateau étalonné (§ 6 à 8) et tare faite à vide.
+2. Repérer le point de chute sur le plateau (coordonnées x, y en mm, comme au § 8.2).
+3. Lancer l'enregistrement, attendre au moins 0,5 s plateau vide, puis lâcher l'objet sans vitesse initiale :
+   `python forceplate.py -p COMx record -d 5 -o chute_m3_h50_c.csv`
+4. Laisser l'objet rebondir librement, sans le rattraper avant le deuxième contact.
+5. Analyser :
+   `python forceplate.py drop chute_m3_h50_c.csv --mass 3 --height 50 --x 0 --y 0 --plot chute_m3_h50_c.png`
+   Le script affiche la durée du contact, le pic de force, l'impulsion, le centre de pression au pic et la distance au point de chute, le temps de vol, v₂, la hauteur de rebond, le rapport impulsion mesurée / attendue et l'énergie dissipée.
+6. Répéter 3 fois par configuration :
+   - au centre, à 25, 50 et 100 cm ;
+   - à 50 cm, sur 4 points excentrés (vers chaque capteur, à ±60 mm).
+7. Vérifier qu'aucune voie ne sature (sortie < 3,25 V dans le fichier). En cas de saturation, réduire la hauteur ou passer en mode haute force.
+
+### 9.4 Critères
+
+| Grandeur | Critère |
+|---|---|
+| Impulsion mesurée / m·(v₁ + v₂) | entre 0,75 et 1,25 (objectif : 0,95 à 1,05) |
+| Distance centre de pression – point de chute | < 20 mm |
+| Dispersion sur 3 essais identiques | < 5 % sur l'impulsion et le pic |
+
+Si l'impulsion est systématiquement trop faible ou trop forte, vérifier d'abord la masse et la hauteur, puis refaire le § 8. Un écart qui augmente avec la hauteur indique une saturation ou une non-linéarité aux fortes charges.
 
 ## 10. En séance
 
@@ -198,10 +252,20 @@ La fiche annonce moins de 5 % par décade de temps : de 10 s à 600 s (1,8 déca
 
 Corrections de gain : ……… / ……… / ……… / ………
 
-### Dérive et chute
+### Dérive
 
 | Essai | Résultat |
 |---|---|
 | Dérive 10 s → 600 s, capteur … | ……… % |
-| Chute m = … kg, h = … cm : impulsion / m·√(2gh) | ……… |
-| Chute : écart du centre de pression | ……… mm |
+
+### Essais de chute (objet : ………, m = ……… kg)
+
+| h (cm) | Point (x, y) | Durée (ms) | Pic (N) | Impulsion mesurée (N·s) | t_vol (ms) | v₂ (m/s) | m·(v₁+v₂) (N·s) | Rapport | Écart CdP (mm) | Énergie dissipée (%) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 25 | 0, 0 | | | | | | | | | |
+| 50 | 0, 0 | | | | | | | | | |
+| 100 | 0, 0 | | | | | | | | | |
+| 50 | 60, 60 | | | | | | | | | |
+| 50 | −60, 60 | | | | | | | | | |
+| 50 | 60, −60 | | | | | | | | | |
+| 50 | −60, −60 | | | | | | | | | |
