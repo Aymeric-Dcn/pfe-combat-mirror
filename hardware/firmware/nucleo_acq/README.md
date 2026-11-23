@@ -8,7 +8,7 @@ Samples the 4 FlexiForce channels of the conditioning board and streams them to 
 |---|---|
 | `bsp/src/bsp.c` | `BSP_ADC_Init()`: 6 channels, triggered by TIM3, calibration, DMA half/complete interrupts. New `BSP_TIMER_Trigger_Init()` (TIM3, 2 kHz). `BSP_Console_Init()`: 921600 bauds, TX by DMA (channel 4) + `BSP_Console_SendDMA()`. `BSP_NVIC_Init()`: DMA1 channel 1 and TIM6. Timebase at 500 ms. |
 | `app/src/frame.c` | New: conversion to millivolts and frame queue. |
-| `app/src/stm32f0xx_it.c` | DMA1 channel 1 handler (one frame per scan), TIM6 handler kept. |
+| `app/src/stm32f0xx_it.c` | DMA1 channel 1 handler (one frame per scan, scan check and resync), TIM6 handler kept. |
 | `app/src/main.c` | Initialisation and main loop. |
 
 ## Channels
@@ -26,6 +26,7 @@ Samples the 4 FlexiForce channels of the conditioning board and streams them to 
 - Serial link: ST-LINK virtual COM port (USART2, PA2/PA3), **921600 baud**, 8N1.
 - The green LED (LD2) toggles every 0.5 s.
 - TIM1 and PA8 are left free for the camera trigger.
+- Scan check: if the ADC reports an overrun, or if the last slot of a scan does not hold the internal reference, the scan is dropped and the ADC and DMA restart at the start of the buffer (`BSP_ADC_Resync()`). The dropped scan appears as a gap on the PC. Without this check, an out-of-order buffer stayed shifted until a reset (seen on 23/11: channels A0 and A4 read swapped).
 
 ## Frame format
 

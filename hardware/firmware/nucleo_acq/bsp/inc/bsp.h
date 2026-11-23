@@ -40,6 +40,7 @@ uint8_t	BSP_Console_SendDMA	(uint8_t *buffer, uint16_t nbytes);
 #define ADC_NB_CHANNELS		6
 
 void BSP_ADC_Init			(void);
+void BSP_ADC_Resync			(void);
 
 /*
  * Timer functions

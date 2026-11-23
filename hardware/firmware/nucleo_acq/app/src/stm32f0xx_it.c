@@ -156,6 +156,28 @@ void TIM6_DAC_IRQHandler()
 
 extern uint16_t	adc_dma_buffer[2*ADC_NB_CHANNELS];
 
+volatile uint16_t	adc_resyncs = 0;
+
+// The last channel of each scan is VREFINT (about 1.2V): its raw value stays
+// in this range for VDDA between 2.0V and 3.6V
+#define VREFINT_RAW_MIN		1300
+#define VREFINT_RAW_MAX		2500
+
+static void queue_scan(uint16_t *scan)
+{
+	if (((ADC1->ISR & ADC_ISR_OVR) == ADC_ISR_OVR)
+	 || (scan[ADC_NB_CHANNELS-1] < VREFINT_RAW_MIN)
+	 || (scan[ADC_NB_CHANNELS-1] > VREFINT_RAW_MAX))
+	{
+		// Scan out of order: drop it (the PC sees a gap) and restart
+		BSP_ADC_Resync();
+		FRAME_Skip();
+		adc_resyncs++;
+		return;
+	}
+	FRAME_Queue(scan);
+}
+
 void DMA1_Channel1_IRQHandler()
 {
 	// Test for Channel 1 Half Transfer
@@ -164,7 +186,7 @@ void DMA1_Channel1_IRQHandler()
 		// Clear the interrupt pending bit
 		DMA1->IFCR = DMA_IFCR_CHTIF1;
 		// Queue the first scan
-		FRAME_Queue(&adc_dma_buffer[0]);
+		queue_scan(&adc_dma_buffer[0]);
 	}
 	// Test for Channel 1 Transfer Complete
 	if ((DMA1->ISR & DMA_ISR_TCIF1) == DMA_ISR_TCIF1)
@@ -172,6 +194,6 @@ void DMA1_Channel1_IRQHandler()
 		// Clear the interrupt pending bit
 		DMA1->IFCR = DMA_IFCR_CTCIF1;
 		// Queue the second scan
-		FRAME_Queue(&adc_dma_buffer[ADC_NB_CHANNELS]);
+		queue_scan(&adc_dma_buffer[ADC_NB_CHANNELS]);
 	}
 }

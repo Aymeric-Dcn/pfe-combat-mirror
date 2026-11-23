@@ -82,6 +82,13 @@ void FRAME_Queue(uint16_t *adc_scan)
 }
 
 
+void FRAME_Skip()
+{
+	// Keep the counter running so that the PC counts the dropped scan as a gap
+	frame_counter++;
+}
+
+
 void FRAME_Send()
 {
 	uint16_t	head;

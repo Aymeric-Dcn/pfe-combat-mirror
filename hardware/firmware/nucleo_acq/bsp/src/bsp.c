@@ -306,6 +306,31 @@ void BSP_ADC_Init()
 }
 
 
+/*
+ * BSP_ADC_Resync()
+ * Restarts the ADC scan and the DMA at the start of the buffer, so that each
+ * scan is stored again in channel order. Called after an ADC overrun or when
+ * the last slot of a scan does not hold the internal reference.
+ */
+
+void BSP_ADC_Resync()
+{
+	// Stop the conversions
+	ADC1->CR |= ADC_CR_ADSTP;
+	while ((ADC1->CR & ADC_CR_ADSTP) == ADC_CR_ADSTP);
+
+	// Restart the DMA at the start of the buffer
+	DMA1_Channel1->CCR &= ~DMA_CCR_EN;
+	DMA1_Channel1->CNDTR = 2*ADC_NB_CHANNELS;
+	DMA1->IFCR = DMA_IFCR_CGIF1;
+
+	// Clear the ADC flags and wait for the next TIM3 trigger
+	ADC1->ISR = ADC_ISR_OVR | ADC_ISR_EOSEQ | ADC_ISR_EOC;
+	DMA1_Channel1->CCR |= DMA_CCR_EN;
+	ADC1->CR |= ADC_CR_ADSTART;
+}
+
+
 
 
 

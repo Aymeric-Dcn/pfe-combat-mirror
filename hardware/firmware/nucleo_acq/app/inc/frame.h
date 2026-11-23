@@ -18,6 +18,7 @@
 #define FRAME_LENGTH	17
 
 void	FRAME_Queue		(uint16_t *adc_scan);
+void	FRAME_Skip		(void);
 void	FRAME_Send		(void);
 
 #endif /* INC_FRAME_H_ */
