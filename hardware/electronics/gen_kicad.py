@@ -223,7 +223,7 @@ def noconnect(pt):
 def text(s, x, y, size=1.27):
     items.append(f'(text "{s}" (exclude_from_sim no) (at {x} {y} 0) (effects (font (size {size} {size})) (justify left bottom)) (uuid "{U()}"))')
 
-FP_R = "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
+FP_R = "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 FP_C = "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P2.50mm"
 FP_RV = "Potentiometer_THT:Potentiometer_Bourns_3296W_Vertical"
 FP_U = "Package_DIP:DIP-14_W7.62mm"
