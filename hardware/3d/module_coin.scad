@@ -24,8 +24,8 @@ sensing_d = 9.53;     // sensing area diameter (datasheet)
 /* [Puck and ball] */
 puck_d = 9.0;         // slightly smaller than the sensing area
 puck_h = 3.5;
-ball_d = 8.0;         // steel bearing ball
-cup_depth = 2.0;      // depth of the spherical cup in the puck
+ball_d = 10.0;        // steel bearing ball (any size from 8 to 10 mm: the 90 deg cone fits all)
+cup_depth = 1.5;      // depth of the spherical cup in the puck (keeps a 0.9 mm rim with a 10 mm ball)
 
 /* [Base (bottom plate side)] */
 base_l = 64;

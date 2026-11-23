@@ -22,9 +22,10 @@ $fn = 48;
 a = plate_size / 2 - corner_inset;
 gap = corner_gap();
 
-// Module positions and orientation: sensor tails point outwards (+/-Y)
-corners = [[ a,  a,   0], [-a,  a,   0],
-           [ a, -a, 180], [-a, -a, 180]];
+// Module positions and orientation: sensor tails point to the centre of the
+// plate, where the Nucleo and its shield sit between the plates
+corners = [[ a,  a, 135], [-a,  a, 225],
+           [ a, -a,  45], [-a, -a, 315]];
 
 echo(str("Distance between sensors: ", 2 * a, " mm"));
 echo(str("Gap between plates: ", gap, " mm"));
