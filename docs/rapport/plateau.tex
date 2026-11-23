@@ -274,7 +274,7 @@ Cet essai a révélé un défaut du firmware : après des branchements à chaud 
 
 \paragraph{Réponse à un échelon.} Pour observer la dynamique de la voie, la résistance de test est commutée par un bouton poussoir : 98,9~k$\Omega$ en permanence, et 21,7~k$\Omega$ ajoutée en parallèle à l'appui, soit un saut de 0,75 à 1,87~V en sortie, l'équivalent d'un coup appliqué instantanément. Avec les composants du filtre mesurés ($R_O$ = 980~$\Omega$, $C_O$ = 327~nF, coupure calculée 497~Hz), l'oscilloscope (figure~\ref{fig:echelon_oscillo}, gauche) montre que la sortie de l'amplificateur monte en 3~µs avec 3,8~\% de dépassement, et la sortie du filtre en 681~µs (de 10 à 90~\%). La vitesse de la chaîne est donc fixée par le filtre de sortie, comme prévu. Ce temps de montée correspond à une constante de temps de 0,31~ms et à une fréquence de coupure de $0{,}35/t_m \approx 514$~Hz, à 3~\% du calcul. Cette coupure reste bien au-dessus du contenu utile d'un coup (quelques dizaines de hertz) et sous la moitié de la fréquence d'échantillonnage (1~kHz).
 
-L'enregistrement de cinq appuis par l'ADC à 2~kHz (figure~\ref{fig:echelon_adc}) montre que tous les fronts, montants et descendants, suivent la même exponentielle : sans rebond du bouton ni dépassement. Il donne une constante de temps de 0,32~ms, cohérente avec l'oscilloscope malgré le faible nombre d'échantillons sur le front. Au repos, le bruit lu par l'ADC vaut 0,55~mV efficaces, moins d'un pas de conversion (0,81~mV) : nettement moins qu'à l'oscilloscope, puisque l'ADC ne voit que la bande passée par le filtre.
+L'enregistrement de six appuis par l'ADC à 2~kHz (figure~\ref{fig:echelon_adc}) montre que tous les fronts, montants et descendants, suivent la même exponentielle : sans rebond du bouton ni dépassement. Sur les onze fronts, la constante de temps vaut 0,32~ms (de 0,31 à 0,33~ms), soit une coupure de 499~Hz : l'ADC retrouve la valeur calculée à moins de 1~\% près, malgré le faible nombre d'échantillons sur chaque front. Au repos, le bruit lu par l'ADC vaut 0,53~mV efficaces, moins d'un pas de conversion (0,81~mV) : nettement moins qu'à l'oscilloscope, puisque l'ADC ne voit que la bande passée par le filtre.
 
 \begin{figure}[H]
 \centering
@@ -287,7 +287,7 @@ L'enregistrement de cinq appuis par l'ADC à 2~kHz (figure~\ref{fig:echelon_adc}
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/echelon_adc.pdf}
-\caption{Échelon enregistré par l'ADC à 2~kHz. À droite, les échantillons des neuf fronts sont recalés sur l'instant du front et normalisés : ils suivent la réponse d'un filtre RC du premier ordre.}
+\caption{Échelon enregistré par l'ADC à 2~kHz. À droite, les échantillons des onze fronts sont recalés sur l'instant du front et normalisés : ils suivent la réponse d'un filtre RC du premier ordre.}
 \label{fig:echelon_adc}
 \end{figure}
 
