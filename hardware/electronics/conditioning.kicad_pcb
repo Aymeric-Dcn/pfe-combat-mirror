@@ -13985,17 +13985,6 @@
 			)
 		)
 	)
-	(gr_text "JP2"
-		(at 107.9 42.2)
-		(layer "F.Cu")
-		(uuid "0ce0b242-3278-4a75-8737-8dafdd11aa28")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.25)
-			)
-		)
-	)
 	(gr_text "RF3"
 		(at 113.9 85.2)
 		(layer "F.Cu")
@@ -14198,5 +14187,27 @@
 		(layers "F.Cu" "B.Cu")
 		(net "GND")
 		(uuid "bc6828ae-43c4-41b4-9d83-8d8af93323a7")
+	)
+	(gr_text "JP5"
+		(at 116.4 70.2)
+		(layer "F.Cu")
+		(uuid "aa0ab65a-4574-44cc-8723-f63fe4ab75ab")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.25)
+			)
+		)
+	)
+	(gr_text "JP6"
+		(at 116.4 109.0)
+		(layer "F.Cu")
+		(uuid "24342190-01cc-4b30-ae95-4e52021c0ff3")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.25)
+			)
+		)
 	)
 )
