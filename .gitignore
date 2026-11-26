@@ -33,3 +33,6 @@ hardware/electronics/*.kicad_prl
 hardware/electronics/.history/
 hardware/firmware/*/Debug/
 hardware/firmware/*/Release/
+# Generator scripts kept local
+hardware/electronics/gen_kicad.py
+hardware/electronics/tests/draw_tests.py
